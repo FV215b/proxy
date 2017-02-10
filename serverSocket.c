@@ -7,7 +7,10 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-#define BUFF_SIZE 1024
+//#include "parsing.h"
+#define PORT 6666
+#define BUFF_SIZE 4096
+#define RESP "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nServer: Apache/2.2.14 (Win32)\r\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\r\nContent-type: text/html\r\nContent-length: 100\r\n\r\n<html>\r\n<body>\r\n\t<h1>Hello, World!</h1>\r\n</body>\r\n</html>\r\n"
 
 int main(int argc, char const *argv[])
 {
@@ -22,7 +25,7 @@ int main(int argc, char const *argv[])
 
     memset(&server, 0, socket_len);
     server.sin_family = AF_INET;
-    server.sin_port = htons(6666);
+    server.sin_port = htons(PORT);
     server.sin_addr.s_addr = INADDR_ANY;
     
     /* Bind */
@@ -59,9 +62,17 @@ int main(int argc, char const *argv[])
             printf("No message received\n");
         }
         else{
-            printf("Got the message\n");
-            printf("MSG: %s\n", buff);
+            printf("%s\n", buff);
         }
+        //req_sock *newsock;
+        //char *newbuff = parsingRequest(buff, newsock);
+        char *newbuff = RESP;
+        int send_status = send(conn_fd, newbuff, strlen(newbuff)-1, 0);
+        if(send_status < 0){
+            perror("Failed to send response\n");
+            exit(EXIT_FAILURE);
+        }
+        printf("Response is successfully sent\n");
         close(conn_fd);
         printf("Connection closed\n");
     }
