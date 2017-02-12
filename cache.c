@@ -143,6 +143,11 @@ void printCache(){
 int main(int argc, char const *argv[])
 {
 	allocCache("1st hello", "www.bing.com/musics", EXPIRE_TIME);
+	printCache();
+	readCache("www.bing.com/musics");
+	printCache();
+	readCache("www.bing.com/musics");
+	allocCache("1st hello", "www.bing.com/musics", EXPIRE_TIME);
 	allocCache("2nd hello", "www.google.com/maps", EXPIRE_TIME);
 	allocCache("3rd hello", "www.baidu.com/news", EXPIRE_TIME);
 	allocCache("4th hello", "www.yahoo.com/musics", EXPIRE_TIME);

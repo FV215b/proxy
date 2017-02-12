@@ -13,12 +13,12 @@
 
 int main(int argc, char const *argv[])
 {
-    struct sockaddr_in client;
-    unsigned int socket_len = sizeof(client);
     if(argc != 2){
         perror("Input ip address\n");
         exit(EXIT_FAILURE);
     }
+    struct sockaddr_in client;
+    unsigned int socket_len = sizeof(client);
     
     /* Create socket */
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);

@@ -18,10 +18,6 @@ int main(int argc, char const *argv[])
     unsigned int socket_len = sizeof(server);
     /* Create socket */
     int socket_fd = socket(AF_INET, SOCK_STREAM | !O_NONBLOCK, 0);
-    if(socket_fd < 0){
-        perror("Failed to create socket\n");
-        exit(EXIT_FAILURE);
-    }
 
     memset(&server, 0, socket_len);
     server.sin_family = AF_INET;
@@ -66,6 +62,53 @@ int main(int argc, char const *argv[])
         }
         //req_sock *newsock;
         //char *newbuff = parsingRequest(buff, newsock);
+        /* 
+            Request parsing(buff)
+                extract method GET/POST/CONNECT, only GET will search in cache
+                extract completed URL to search cache as key
+            
+            Request parsing for socket(buff)
+                extract hostname, port to create socket
+                change request line from completed URL to partial URL
+                add host if header doesn't have
+                add User-Agent if head doesn't have
+                add connection & proxy-connection as "close" if header doesn't have
+
+            Response parsing(resp)
+                expire time(if non-exist, give default value)
+
+            Response parsing for cache(resp)
+                change date
+            
+            *********************************
+            Request parsing
+                extract method GET/POST/CONNECT, only GET will search in cache
+                extract completed URL to search cache as key
+            read cache
+            if non-exist
+                Request parsing for socket
+                    extract hostname, port to create socket
+                    change request line from completed URL to partial URL
+                    add host if header doesn't have
+                    add User-Agent if head doesn't have
+                    add connection & proxy-connection as "close" if header doesn't have
+                build up server socket
+                wait for response
+                Response parsing
+                    expire time(if non-exist, give default value)
+                memory allocation for response
+            else
+                Response parsing for cache
+                    change date
+            send back
+            *********************************
+
+            what todo:
+                extra long request/response cut into multiple http packages
+                CONNECT mode
+                only cache GET
+                support port listen configuation
+        */
         char *newbuff = RESP;
         int send_status = send(conn_fd, newbuff, strlen(newbuff)-1, 0);
         if(send_status < 0){
