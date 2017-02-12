@@ -7,7 +7,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-//#include "parsing.h"
+//#include "proxy.h"
 #define PORT 6666
 #define BUFF_SIZE 4096
 #define RESP "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nServer: Apache/2.2.14 (Win32)\r\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\r\nContent-type: text/html\r\nContent-length: 100\r\n\r\n<html>\r\n<body>\r\n\t<h1>Hello, World!</h1>\r\n</body>\r\n</html>\r\n"
