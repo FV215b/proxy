@@ -8,13 +8,23 @@
 #include <unistd.h>
 #include <errno.h>
 #include "parser.h"
-//#include "proxy.h"
-#define PORT 6666
-#define BUFF_SIZE 4096
-#define RESP "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nServer: Apache/2.2.14 (Win32)\r\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\r\nContent-type: text/html\r\nContent-length: 100\r\n\r\n<html>\r\n<body>\r\n\t<h1>Hello, World!</h1>\r\n</body>\r\n</html>\r\n"
+#include "cache.h"
+#include "socket.h"
+//#define PORT 6666
+//#define BUFF_SIZE 4096
+#define RESP "HTTP/1.1 200 OK\r\nDate: Mon, 27 Jul 2009 12:28:53 GMT\r\nServer: Apache/2.2.14 (Win32)\r\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\r\nContent-type: text/html\r\nContent-length: 100\r\n\r\n<html>\r\n<body>\r\n<h1>Hello, World!</h1>\r\n</body>\r\n</html>\r\n"
 
 int main(int argc, char const *argv[])
 {
+    if(argc != 2){
+        perror("Input listening port\n");
+        exit(EXIT_FAILURE);
+    }
+    int po = atoi(argv[1]);
+    if(po < 1024){
+        perror("Engaging reserved port is banned\n");
+        exit(EXIT_FAILURE);
+    }
     struct sockaddr_in server;
     unsigned int socket_len = sizeof(server);
     /* Create socket */
@@ -22,7 +32,7 @@ int main(int argc, char const *argv[])
 
     memset(&server, 0, socket_len);
     server.sin_family = AF_INET;
-    server.sin_port = htons(PORT);
+    server.sin_port = htons(po);
     server.sin_addr.s_addr = INADDR_ANY;
     
     /* Bind */
@@ -111,7 +121,29 @@ int main(int argc, char const *argv[])
                 support port listen configuation
         */
         req_info* reqinfo = (req_info *)malloc(sizeof(req_info));
-        char* newbuff = parse_request(buff, reqinfo);
+        if(reqinfo == NULL){
+            printf("Allocation failed.\n");
+            exit(EXIT_FAILURE);
+        }
+        char* sendbuff = parse_request(buff, reqinfo);
+        printf("Parsing result:\n%s\n", sendbuff);
+        /* If reqinfo->method == GET */
+        /* ReadCache(reqinfo->c_url); */
+            char* cache_result = readCache("http://www.cplusplus.com:6666/reference/unordered_map/unordered_map");
+        char* newbuff;
+        if(cache_result == NULL){
+            /* Server socket establishment */
+            /* newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff); */
+            newbuff = clientSock("www.cplusplus.com", "http", sendbuff);
+            /* If method == GET && status code == 200 */
+            /* allocCache(newbuff, reqinfo->c_url, reqinfo->time); */
+                allocCache(newbuff, "http://www.cplusplus.com:6666/reference/unordered_map/unordered_map", 10);
+            printCache();
+        }
+        else{
+            newbuff = cache_result;
+            printCache();
+        }
         int send_status = send(conn_fd, newbuff, strlen(newbuff)-1, 0);
         if(send_status < 0){
             perror("Failed to send response\n");
@@ -119,6 +151,9 @@ int main(int argc, char const *argv[])
         }
         printf("Response is successfully sent\n");
         close(conn_fd);
+
+        /* free(reqinfo->char*) */
+        free(reqinfo);
         printf("Connection closed\n");
     }
 

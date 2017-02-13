@@ -7,15 +7,20 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-#define PORT 6666
-#define BUFF_SIZE 4096
+//#define PORT 6666
+#define BUFF_SIZE 104800
 //Host: www.cplusplus.com\r\n
-#define MSG "GET http://www.cplusplus.com:6666/unordered_map.html HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
-
+#define MSG "GET http://www.cplusplus.com:6666/reference/unordered_map/unordered_map HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
+#define MSGoogle "GET https://www.google.com:8080 HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
 int main(int argc, char const *argv[])
 {
     if(argc != 2){
-        perror("Input ip address\n");
+        perror("Input port\n");
+        exit(EXIT_FAILURE);
+    }
+    int po = atoi(argv[1]);
+    if(po < 1024){
+        perror("Engaging reserved port is banned\n");
         exit(EXIT_FAILURE);
     }
     struct sockaddr_in client;
@@ -30,10 +35,10 @@ int main(int argc, char const *argv[])
 
     memset(&client, 0, socket_len);
     client.sin_family = AF_INET;
-    client.sin_port = htons(PORT);
-    int ip_status = inet_pton(AF_INET, argv[1], &client.sin_addr);
+    client.sin_port = htons(po);
+    int ip_status = inet_pton(AF_INET, "127.0.0.1", &client.sin_addr);
     if(ip_status != 1){
-        perror("Failed to convert argv[1] to ip address\n");
+        perror("Failed to construct socket\n");
         exit(EXIT_FAILURE);
     }
 
@@ -44,7 +49,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
     printf("Build connection\n");
-    char *buff = MSG;
+    char *buff = MSGoogle;
     int send_status = send(socket_fd, buff, strlen(buff)-1, 0);
     if(send_status < 0){
         perror("Failed to send message\n");

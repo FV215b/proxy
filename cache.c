@@ -1,4 +1,4 @@
-#include <stdio.h>
+/*#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -7,12 +7,12 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <errno.h>
-#include "proxy.h"
+#include <errno.h>*/
+#include "cache.h"
 
-#define MAX_OBJECT_NUM 4
-#define MAX_OBJECT_SIZE 10
-#define EXPIRE_TIME 2
+cache* head = NULL;
+cache* tail = NULL;
+int obj_num = 0;
 
 bool allocCache(char* buff, char* url, int extime){
 	int buffsize = strlen(buff)+1;
@@ -135,13 +135,12 @@ void printCache(){
 	cache* curr = head;
 	printf("Cache number: %d\n", obj_num);
 	while(curr != NULL){
-		printf("%s: %s, exp: %d\n", curr->url, curr->res, curr->ext);
+		printf("%s: %s\nexp: %d\n", curr->url, curr->res, curr->ext);
 		curr = curr->next;
 	}
 }
 
-int main(int argc, char const *argv[])
-{
+/*int main(int argc, char const *argv[]){
 	allocCache("1st hello", "www.bing.com/musics", EXPIRE_TIME);
 	printCache();
 	readCache("www.bing.com/musics");
@@ -165,4 +164,4 @@ int main(int argc, char const *argv[])
 	readCache("www.zhihu.com/questions");
 	printCache();
 	return EXIT_SUCCESS;
-}
+}*/

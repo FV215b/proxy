@@ -6,15 +6,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <errno.h>
 
-/* required by server-side socket 
-struct _req_sock{
-	char *host;
-	char *serv;
-};
-typedef struct _req_sock req_sock;*/
+#define MAX_OBJECT_NUM 4
+#define MAX_OBJECT_SIZE 1000
+#define EXPIRE_TIME 10
 
 struct _cache{
 	char* url;
@@ -24,10 +23,6 @@ struct _cache{
 	struct _cache* prev;
 };
 typedef struct _cache cache;
-
-cache* head = NULL;
-cache* tail = NULL;
-int obj_num = 0;
 
 //char* parsingRequest(char *buff, req_sock *sock);
 bool allocCache(char* buff, char* url, int extime);
