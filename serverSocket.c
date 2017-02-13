@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include "parser.h"
 //#include "proxy.h"
 #define PORT 6666
 #define BUFF_SIZE 4096
@@ -109,7 +110,8 @@ int main(int argc, char const *argv[])
                 only cache GET
                 support port listen configuation
         */
-        char *newbuff = RESP;
+        req_info* reqinfo = (req_info *)malloc(sizeof(req_info));
+        char* newbuff = parse_request(buff, reqinfo);
         int send_status = send(conn_fd, newbuff, strlen(newbuff)-1, 0);
         if(send_status < 0){
             perror("Failed to send response\n");

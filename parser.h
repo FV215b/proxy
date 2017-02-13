@@ -43,6 +43,6 @@ typedef struct rsp_info_t{
   char message[512];
 }rsp_info;
 
-char* parse_request(char*);
+char* parse_request(char* buff, req_info* reqinfo);
 //char* rewrite_request(req_info*);
 rsp_info parse_response(char*);

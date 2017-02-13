@@ -9,7 +9,7 @@
 #include <errno.h>
 #define PORT 6666
 #define BUFF_SIZE 4096
-#define MSG "GET http://www.cplusplus.com/ HTTP/1.1\r\nHost: www.google.com\r\nProxy-Connection: keep-alive\r\n\r\n"
+#define MSG "GET http://www.cplusplus.com:6666/unordered_map.html HTTP/1.1\r\nHost: www.cplusplus.com\r\nProxy-Connection: keep-alive\r\n\r\n"
 
 int main(int argc, char const *argv[])
 {

@@ -1,9 +1,11 @@
 CFLAGS = -Wall -Werror -pedantic -std=gnu99
 
-cache: cache.o
-	gcc -o $@ $(CFLAGS) $<
-cache.o: cache.c proxy.h
-	gcc $(CFLAGS) -c cache.c
+serverSocket: serverSocket.o parser.o
+	gcc -o $@ $(CFLAGS) serverSocket.o parser.o
+serverSocket.o: serverSocket.c
+	gcc $(CFLAGS) -c serverSocket.c
+parser.o: parser.c parser.h
+	gcc $(CFLAGS) -c parser.c
 .PHONY: clean
 clean:
-	rm -f cache cache.o
+	rm -f parser.o serverSocket.o serverSocket

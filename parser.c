@@ -2,7 +2,7 @@
 
 #define DEBUG
 
-char* buffer = "   CONNECT ftp://www.cmu.edu:8088/hub/index.html HTTP/1.1 lala \r\nthis is a bullshit header\r\nConnection:close\r\n\r\n";
+//char* buffer = "   CONNECT ftp://www.cmu.edu:8088/hub/index.html HTTP/1.1 lala \r\nthis is a bullshit header\r\nConnection:close\r\n\r\n";
 
 #ifndef HAVE_MEMMEM
 
@@ -40,7 +40,7 @@ void *memmem (const void *haystack, size_t haystack_len, const void *needle,size
 
 /*extract information from the request_line buffer*/
 /*req_sock = tokens->host, req_serv = tokens->prtc*/
-char* parse_request(char* buffer){
+char* parse_request(char* buffer, req_info* reqinfo){
 #ifdef DEBUG
   printf("start parsing request:\n");
 #endif
@@ -263,7 +263,7 @@ char* parse_request(char* buffer){
 	       char* u_a = strstr(buffer, "User-Agent:");
 	       //   printf("DEBUG: u_a is:%s\n",u_a);
 	       if(!u_a){
-		 char* h_str = "\r\nUser-Agetn:Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3)\n  Gecko/20120305 Firefox/10.0.3";  
+		 char* h_str = "\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3)";//\n  Gecko/20120305 Firefox/10.0.3";  
 #ifdef DEBUG
 		 printf("DEBUG: No User-Agent header field, need to be added as following\n");
 		 printf("User-Agent: xxx\n");
