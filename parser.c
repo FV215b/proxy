@@ -73,14 +73,14 @@ char* parse_request(char* buffer, req_info* reqinfo){
     char* m_e = strchr(m_s,' '); //first space after the start, should be the end of the method
     if(m_e){
       //printf("m_e point to %s\n", m_e);
-      strncpy(tokens->method, m_s,(int)(m_e - m_s)); //copy into method[]
-      i += (size_t)(m_e - m_s); 
+      strncpy(tokens->method, m_s,(int)(m_e + 1 - m_s)); //copy into method[]
+      // i += (size_t)(m_e - m_s); 
       //  tokens->method[i+1] = '\0'; //end it by null terminator
 #ifdef DEBUG
       printf("DEBUG: Method is: %s\n", tokens->method);
 #endif
       //only accpet three method request
-      if (strcasecmp(tokens->method, "GET") && strcasecmp(tokens->method, "POST")&& strcasecmp(tokens->method, "CONNECT")) {
+      if (strcasecmp(tokens->method, "GET ") && strcasecmp(tokens->method, "POST ")&& strcasecmp(tokens->method, "CONNECT ")) {
 	printf("This method cannot be implemented\n");
 	return NULL;
       }
@@ -278,9 +278,9 @@ char* parse_request(char* buffer, req_info* reqinfo){
 	 }
 	 /*copy the original headers into new buffer*/
 	 //char* start = buffer+strlen(request);
-	 // printf("DEBUG:start is:%s\n",start);
-	 char* end = strstr(buffer,"\r\n\r\n")+4;
-	 //printf("DEBUG:end is:%s\n", end);
+	  //printf("DEBUG:start is:%s\n",start);
+	 char* end = strstr(buffer,"\r\n")+2;
+	 printf("DEBUG:end is:%s\n", end);
 	 if(!end){
 	   printf("The request doesn't end with \\r\\n\n");
 	   return NULL;
