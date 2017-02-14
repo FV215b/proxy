@@ -10,8 +10,8 @@
 //#define PORT 6666
 #define BUFF_SIZE 104800
 //Host: www.cplusplus.com\r\n
-#define MSG "GET http://www.cplusplus.com:6666/reference/unordered_map/unordered_map HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
-#define MSGoogle "GET https://www.google.com:8080 HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
+//#define MSG "GET http://www.cplusplus.com:6666/reference/unordered_map/unordered_map HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
+//#define MSGoogle "GET https://www.google.com:8080/ HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n"
 int main(int argc, char const *argv[])
 {
     if(argc != 2){
@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
     printf("Build connection\n");
-    char *buff = MSGoogle;
+    char *buff = "GET http://www.cplusplus.com:6666/reference/unordered_map/unordered_map HTTP/1.1\r\nProxy-Connection: keep-alive\r\n\r\n";
     int send_status = send(socket_fd, buff, strlen(buff)-1, 0);
     if(send_status < 0){
         perror("Failed to send message\n");
