@@ -39,10 +39,13 @@ typedef struct req_info_t{
 
 
 typedef struct rsp_info_t{
-  char status[10];
-  char message[512];
+  int code;
+  char status[128];
+  char server[128];
+  char date[128];
+  char expire[128];
+  
 }rsp_info;
-
 char* parse_request(char* buff, req_info* reqinfo);
 //char* rewrite_request(req_info*);
 rsp_info parse_response(char*);
