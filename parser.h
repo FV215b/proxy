@@ -31,10 +31,10 @@
 typedef struct req_info_t{
   char method[10];
   char prtc[10];
-  char host[512];
+  char* host;
   int port;
-  char c_url[512];
-  char p_url[512];
+  char* c_url;
+  char* p_url;
 }req_info;
 
 

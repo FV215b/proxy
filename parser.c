@@ -96,7 +96,7 @@ char* parse_request(char* buffer, req_info* tokens){
   char* c_s = strchr(m_s+strlen(tokens->method)-1,' '); 
   char* c_e = strchr(c_s+1, ' ');
   //printf("End of the url is:%s\n",c_e);
-  tokens->c_url=(char*)malloc(strlen(tokens->c_url) +1);
+  tokens->c_url = (char*)malloc((int)(c_e - c_s)); 
   strncpy(tokens->c_url, c_s+1, (int)(c_e - c_s));
 #ifdef DEBUG
   printf("DEBUG: Complete url is:%s\n", tokens->c_url);
@@ -129,6 +129,7 @@ char* parse_request(char* buffer, req_info* tokens){
 	/*get the partial url from here*/
 	char* pu_s = po_e;
 	char* pu_e = strchr(pu_s, ' ');
+	tokens->p_url = (char*)malloc((int)(pu_e - pu_s) + 1);
 	strncpy(tokens->p_url, pu_s, (int)(pu_e - pu_s)+1);
 #ifdef DEBUG
 	printf("DEBUG: The partial url is:%s\n", tokens->p_url);
@@ -136,6 +137,7 @@ char* parse_request(char* buffer, req_info* tokens){
 	/*get the port*/
 	char s_port[10];
 	bzero(s_port,10); //fill with 0
+	tokens->host = (char*)malloc((int)(po_s - h_s)); 
 	strncpy(tokens->host, h_s, (int)(po_s - h_s));
 #ifdef DEBUG
 	printf("DEBUG: Host is:%s\n", tokens->host);
@@ -194,6 +196,7 @@ char* parse_request(char* buffer, req_info* tokens){
     printf("after strncpy protocol version:%s\n",request);
 #endif
     char* l_e = request+strlen(tokens->method)+strlen(tokens->p_url)+strlen(http);
+
     if(!l_e){
       printf("request buffer ran out after first line\n");
       return NULL;
@@ -214,7 +217,7 @@ char* parse_request(char* buffer, req_info* tokens){
 	  printf("The request doesn't end with \\r\\n\n");
 	  return NULL;
 	}else{
-	  #ifdef DEBUG
+#ifdef DEBUG
 	  printf("DEBUG:The headers end with \\r\\n\\r\\n\n");
 #endif
 	  /*copy the original headers into new buffer*/
@@ -337,12 +340,16 @@ char* parse_request(char* buffer, req_info* tokens){
 #endif
 	}
       }
-    }
+    }  
 #ifdef DEBUG
-    printf("after rewrite, return as:\n%s\n", request);
+      printf("after rewrite, return as:\n%s\n", request);
 #endif
-    
-    return request;
+      
+free(tokens->c_url);
+free(tokens->p_url);
+free(tokens->host);
+
+return request;
+
+
 }
-
-
