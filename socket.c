@@ -48,28 +48,33 @@ char* clientSock(char* host, char* port, char* buff){
     printf("Message is successfully sent\n");
     //printf("Host: %s\nPort: %s\nMessage sent:\n%s",host, port, buff);
     char newbuff[BUFF_SIZE];
-    memset(newbuff, 0, BUFF_SIZE);
-    int receive_len = recv(socket_fd, newbuff, BUFF_SIZE, 0);
-    if(receive_len < 0){
-        perror("Failed to receive response\n");
-        printf("%d: %s\n", errno, strerror(errno));
-        close(socket_fd);
-        freeaddrinfo(clientlist);
-        return NULL;
-    }
-    else if(receive_len == 0){
-        printf("No response received\n");
-        close(socket_fd);
-        freeaddrinfo(clientlist);
-        return NULL;
-    }
+    int receive_len;
+    char* ret = malloc(sizeof(char));
+    memset(ret, '\0', sizeof(char));
+    do{
+        memset(newbuff, '\0', BUFF_SIZE);
+        receive_len = recv(socket_fd, newbuff, BUFF_SIZE, 0);
+        if(receive_len < 0){
+            perror("Failed to receive response\n");
+            printf("%d: %s\n", errno, strerror(errno));
+            close(socket_fd);
+            freeaddrinfo(clientlist);
+            free(ret);
+            return NULL;
+        }
+        ret = realloc(ret, strlen(ret)+strlen(newbuff)+1);
+        strcat(ret, newbuff);
+        /*else if(receive_len == 0){
+            printf("No response received\n");
+            close(socket_fd);
+            freeaddrinfo(clientlist);
+            return NULL;
+        }*/
+    }while(receive_len != 0);
     //printf("Response from %s\n", s->ai_addr);
-    printf("Response length %d", receive_len);
-    printf("Response:\n%s\n", newbuff);
+    printf("Response length %lu\n", strlen(ret));
+    printf("Response:\n%s\n", ret);
     close(socket_fd);
     freeaddrinfo(clientlist);
-    char* ret = malloc(strlen(newbuff)+1);
-    memset(ret, '\0', strlen(newbuff)+1);
-    strcpy(ret, newbuff);
     return ret;
 }

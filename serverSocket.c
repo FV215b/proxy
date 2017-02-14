@@ -144,7 +144,7 @@ int main(int argc, char const *argv[])
             if(strcmp(reqinfo->method, "GET") == 0){
                 allocCache(newbuff, reqinfo->c_url, EXPIRE_TIME);
             }
-            printCache();
+            //printCache();
         }
         else{
             newbuff = cache_result;

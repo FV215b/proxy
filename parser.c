@@ -42,31 +42,31 @@ char* parse_request(char* buffer, req_info* tokens){
   	/* host */
     m_e = strchr(m_s, ':');
     tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
-	strncpy(tokens->host, m_s, (int)(m_e - m_s));
-	strcat(tokens->host, "");
-	m_s = m_e + 1;
+	  strncpy(tokens->host, m_s, (int)(m_e - m_s));
+	  strcat(tokens->host, "");
+	  m_s = m_e + 1;
     if(strchr(m_s, '/') != NULL && strchr(m_s, '/') < strchr(m_s, ' ')){ // has partial URL e.g. www.google.com:8080/maps HTTP/1.1\r\n
       /* port */
       m_e = strchr(m_s, '/'); 
       char* temp = malloc((int)(m_e - m_s + 1)); 
-	  strncpy(temp, m_s, (int)(m_e - m_s));
-	  strcat(temp, "");
+	    strncpy(temp, m_s, (int)(m_e - m_s));
+	    strcat(temp, "");
       tokens->port = atoi(temp);
       free(temp);
       m_s = m_e;
 	  
 	  /* Partial URL */
-	  m_e = strchr(m_s, ' ');
+	    m_e = strchr(m_s, ' ');
       tokens->p_url = (char*)malloc((int)(m_e - m_s + 1)); 
-	  strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
-	  strcat(tokens->p_url, "");
+	    strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
+	    strcat(tokens->p_url, "");
     }
     else{ // no partial URL e.g. www.google.com:8080 HTTP/1.1\r\n
       /* port */
       m_e = strchr(m_s, ' '); 
       char* temp = malloc((int)(m_e - m_s + 1)); 
-	  strncpy(temp, m_s, (int)(m_e - m_s));
-	  strcat(temp, "");
+	    strncpy(temp, m_s, (int)(m_e - m_s));
+	    strcat(temp, "");
       tokens->port = atoi(temp);
       free(temp);
 
@@ -80,30 +80,29 @@ char* parse_request(char* buffer, req_info* tokens){
       /* Host */
       m_e = strchr(m_s, '/');
       tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
-	  strncpy(tokens->host, m_s, (int)(m_e - m_s));
-	  strcat(tokens->host, "");
-	  m_s = m_e;
+	    strncpy(tokens->host, m_s, (int)(m_e - m_s));
+	    strcat(tokens->host, "");
+	    m_s = m_e;
 	  
-	  /* Partial URL */
-	  m_e = strchr(m_s, ' ');
+	    /* Partial URL */
+	    m_e = strchr(m_s, ' ');
       tokens->p_url = (char*)malloc((int)(m_e - m_s + 1)); 
-	  strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
-	  strcat(tokens->p_url, "");
+	    strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
+	    strcat(tokens->p_url, "");
     }
     else{ //  no partial URL e.g. www.google.com HTTP/1.1
       /* Host */
       m_e = strchr(m_s, ' ');
       tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
-	  strncpy(tokens->host, m_s, (int)(m_e - m_s));
-	  strcat(tokens->host, "");
-
-	  /* Port */
-      tokens->port = 80;
+	    strncpy(tokens->host, m_s, (int)(m_e - m_s));
+	    strcat(tokens->host, "");
 
       /* Partial URL */
       tokens->p_url = (char*)malloc(2*sizeof(char));
       strcat(tokens->p_url, "/");
     }
+    /* Port */
+    tokens->port = 80;
   }
   m_s = strstr(m_e, "\r\n");
   char* str_host = "\r\nHost: ";
