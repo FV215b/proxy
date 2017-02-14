@@ -40,18 +40,18 @@ void *memmem (const void *haystack, size_t haystack_len, const void *needle,size
 
 /*extract information from the request_line buffer*/
 /*req_sock = tokens->host, req_serv = tokens->prtc*/
-char* parse_request(char* buffer, req_info* reqinfo){
+char* parse_request(char* buffer, req_info* tokens){
 #ifdef DEBUG
   printf("start parsing request:\n");
 #endif
-  req_info* tokens = (req_info*)malloc(sizeof(req_info));
-  if(tokens == NULL){
-    free(tokens);
-    printf("Failed to malloc\n");
-    return NULL;
-  }
+  //  req_info* tokens = (req_info*)malloc(sizeof(req_info));
+  //if(tokens == NULL){
+  //free(tokens);
+  // printf("Failed to malloc\n");
+  //return NULL;
+  // }
 #ifdef DEBUG
-  printf("malloced for tokens\n");
+  printf("get the malloced tokens as parameter\n");
 #endif
   size_t i = 0;
   //skip space
@@ -96,7 +96,7 @@ char* parse_request(char* buffer, req_info* reqinfo){
   char* c_s = strchr(m_s+strlen(tokens->method)-1,' '); 
   char* c_e = strchr(c_s+1, ' ');
   //printf("End of the url is:%s\n",c_e);
-  // tokens->c_url=(char*)malloc(strlen(tokens->c_url) +1);
+  tokens->c_url=(char*)malloc(strlen(tokens->c_url) +1);
   strncpy(tokens->c_url, c_s+1, (int)(c_e - c_s));
 #ifdef DEBUG
   printf("DEBUG: Complete url is:%s\n", tokens->c_url);
@@ -172,7 +172,7 @@ char* parse_request(char* buffer, req_info* reqinfo){
       printf("DEBUG:Request before rewrite:%s\n", buffer);
 #endif
     /*Need to allocate a new string buffer for new request line with partial url and refilled headers*/
-    char* http = " HTTP/1.1";
+    char* http = "HTTP/1.1";
     char* request = (char*)malloc(sizeof(tokens->method) + sizeof(tokens->p_url) + sizeof(http) + sizeof(buffer));
     if(request == NULL){
       free(request);
@@ -207,138 +207,142 @@ char* parse_request(char* buffer, req_info* reqinfo){
 	printf("Request line doesn't end with LRCF\n");
 	return NULL;
       }else{
-	char* ho_s = strstr(hd_s, "Host:");
-	//	printf("DEBUG:ho_s is:%s\n",ho_s);
-	if(!ho_s){
-	  char* h_str = "\r\nHost: ";
-	 
-#ifdef DEBUG
-	  printf("DEBUG: No Host header field, need to be added as following\n");
-	  printf("Host: %s\n", tokens->host);
+	strncpy(l_e, LRCF, 2);//add the first \r\n into new buffer
+	char* end = strstr(buffer,"\r\n\r\n");
+	//printf("DEBUG:end is:%s\n", end);
+	if(!end){
+	  printf("The request doesn't end with \\r\\n\n");
+	  return NULL;
+	}else{
+	  #ifdef DEBUG
+	  printf("DEBUG:The headers end with \\r\\n\\r\\n\n");
 #endif
-	  strncpy(l_e,h_str,8);
-	  strncpy(l_e + 8, tokens->host,strlen(tokens->host));
+	  /*copy the original headers into new buffer*/
+	  char* header = l_e+2;
+	  //printf("DEBUG:header-3 is:%s\n",header-3);
+	  //printf("DEBUG:l_e+2-3 is:%s\n",l_e+2-3);
+	  char* buf_header = strstr(buffer,"\r\n");
+	  //printf("DEBUG:buf_header+2 is:'%s'\n",buf_header);
+	  strncpy(header, buf_header+2, (size_t)(end-buf_header-2));
+	  //printf("DEBUG:the copy end-4 is:'%s'\n", end-4);
+	  //printf("DEBUG:after copying whole headers the header is:%s\n", header);
+	}
 #ifdef DEBUG
-	  printf("after adding host:%s\n",request);
+	printf("after adding rest headers is:%s\n",request);
+#endif
+	char* hs_in_req = strstr(request,"\r\n");
+	char* l_e1 = request + strlen(request);
+	if(!l_e1){
+	}else{
+	  char* ho_s = strstr(hs_in_req, "Host:");
+	  //	printf("DEBUG:ho_s is:%s\n",ho_s);
+	  if(!ho_s){
+	    char* h_str = "\r\nHost: ";
+#ifdef DEBUG
+	    printf("DEBUG: No Host header field, need to be added as following\n");
+	    printf("Host: %s\n", tokens->host);
+#endif
+	    strncpy(l_e1, h_str,8);
+	    strncpy(l_e1+8, tokens->host,strlen(tokens->host));
+#ifdef DEBUG
+	    printf("after adding host request is:%s\n",request);
+#endif
+	  }else{ 
+#ifdef DEBUG
+	    printf("DEBUG: Has Host header field, no need to be added\n");
+#endif
+	  }
+	}
+	char* l_e2 = request + strlen(request);
+      // printf("DEBUG:request+strlen(request) is:%s\n",l_e2);
+	if(!l_e2){
+	  printf("request buffer ran out\n");
+	  return NULL;
+	}else{
+	  //char*h_str = "\r\nConnection:close";
+	  char* hs_in_req = strstr(request,"\r\n");  
+	  char* cn_s = strstr(hs_in_req,"Connection:");
+	  if((!cn_s) || (cn_s && (*(cn_s - 1) == '-'))){
+	    char*h_str = "\r\nConnection:close"; 
+#ifdef DEBUG
+	  printf("DEBUG: No Connection header field, need to be added as following\n");
+	  printf("Connection: close\n");
+#endif
+	  strncpy(l_e2,h_str,strlen(h_str));
+#ifdef DEBUG
+	  printf("after adding c:c request is:%s\n",request);
+#endif
+	}else{
+#ifdef DEBUG
+	  printf("DEBUG: Has c-c header field, no need to be added\n");
+#endif
+	  }
+	}
+	char* l_e3 = request + strlen(request);
+	//printf("DEBUG:l_e3 is:%s\n",l_e3);
+	if(!l_e3){
+	  printf("request buffer ran out\n");
+	  return NULL;
+	}else{
+	  char* hs_in_req = strstr(request,"\r\n");
+	  char* pc_s = strstr(hs_in_req,"Proxy-Connection:");
+	  // printf("DEBUG:pc_s is:%s\n",pc_s);
+	  if(!pc_s){
+	    char* h_str = "\r\nProxy-Connection: close"; 
+	    strncpy(l_e3, h_str,strlen(h_str));
+#ifdef DEBUG
+	    printf("DEBUG:after adding p-c:c is:%s\n",request);
+#endif
+	  }else{
+#ifdef DEBUG
+	    printf("DEBUG: Has p-c header field, no need to be added\n");
+#endif
+	  }
+	}
+	char* l_e4 = request + strlen(request);
+	if(!l_e4){
+	  printf("request buffer ran out\n");
+	  return NULL;
+	}else{
+	  char* hs_in_req = strstr(request,"\r\n");
+	  char* ua_s = strstr(hs_in_req, "User-Agent:");
+	  //   printf("DEBUG: u_a is:%s\n",u_a);
+	  if(!ua_s){
+	    char* h_str = "\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3)";//\n  Gecko/20120305 Firefox/10.0.3";  
+#ifdef DEBUG
+	    printf("DEBUG: No User-Agent header field, need to be added as following\n");
+	    printf("User-Agent: xxx\n");
+#endif
+	    strncpy(l_e4,h_str,strlen(h_str));
+#ifdef DEBUG
+	    printf("after adding u-a is:%s\n",request);
+#endif
+	  }else{
+#ifdef DEBUG
+	    printf("DEBUG: Has u-a header field, no need to be added\n");
+#endif
+	  }
+	}
+	char* l_e5 = request+ strlen(request);
+	char* body_s = strstr(buffer,"\r\n\r\n");
+	char* body_e = buffer + strlen(buffer);
+	printf("DEBUG:body_e is:%s\n",body_e);
+	if(!body_e){
+	  printf("buffer end with null\n");
+	  return NULL;
+	}else{
+	  strncpy(l_e5,body_s,(int)(body_e - body_s));
+#ifdef DEBUG
+	  printf("After copy body, request is:%s\n",request);
 #endif
 	}
-	 char* l_e2 = request + strlen(request);
-	  // printf("DEBUG:request+strlen(request) is:%s\n",l_e2);
-	 if(!l_e2){
-	   printf("request buffer ran out\n");
-	   return NULL;
-	 }else{
-	   //char*h_str = "\r\nConnection:close";
-	   char* cn_s = strstr(buffer,"Connection:");
-	   if(!cn_s){
-	     char*h_str = "\r\nConnection:close"; 
-#ifdef DEBUG
-	     printf("DEBUG: No Connection header field, need to be added as following\n");
-	     printf("Connection: close\n");
-#endif
-	     strncpy(l_e2,h_str,strlen(h_str));
-#ifdef DEBUG
-	     printf("after adding c:c is:%s\n",request);
-#endif
-	   }
-	   char* l_e3 = request + strlen(request);
-	   if(!l_e3){
-	     printf("request buffer ran out\n");
-	     return NULL;
-	   }else{
-	     char* pc_s = strstr(buffer,"Proxy-Connection:");
-	     // printf("DEBUG:pc_s is:%s\n",pc_s);
-	     if(!pc_s){
-	       char* h_str = "\r\nProxy-Connection: close"; 
-	       strncpy(l_e3, h_str,strlen(h_str));
-#ifdef DEBUG
-	       printf("after adding p-c:c is:%s\n",request);
-#endif
-	     }
-	     char* l_e4 = request + strlen(request);
-	     if(!l_e4){
-	       printf("request buffer ran out\n");
-	       return NULL;
-	     }else{
-	       char* u_a = strstr(buffer, "User-Agent:");
-	       //   printf("DEBUG: u_a is:%s\n",u_a);
-	       if(!u_a){
-		 char* h_str = "\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3)";//\n  Gecko/20120305 Firefox/10.0.3";  
-#ifdef DEBUG
-		 printf("DEBUG: No User-Agent header field, need to be added as following\n");
-		 printf("User-Agent: xxx\n");
-#endif
-		 strncpy(l_e4,h_str,strlen(h_str));
-#ifdef DEBUG
-		 printf("after adding u-a is:%s\n",request);
-#endif
-	       }
-	     }
-	   }
-	 }
-	 /*copy the original headers into new buffer*/
-	 //char* start = buffer+strlen(request);
-	  //printf("DEBUG:start is:%s\n",start);
-	 char* end = strstr(buffer,"\r\n")+2;
-	 printf("DEBUG:end is:%s\n", end);
-	 if(!end){
-	   printf("The request doesn't end with \\r\\n\n");
-	   return NULL;
-	 }else{
-	   char* header = request + strlen(request);
-	   //printf("DEBUG:header is:%s\n",header);
-	   strncpy(header, hd_s, (size_t)(end-hd_s));
-	 }
-#ifdef DEBUG
-	 printf("after adding rest headers is:%s\n",request);
-#endif	 
       }
     }
 #ifdef DEBUG
     printf("after rewrite, return as:\n%s\n", request);
 #endif
-
-  return request;
+    
+    return request;
 }
 
 
-/* void forward_header(int dest_sock){ */
-/*   rewrite_header(); */
-/*   //#ifdef DEBUG */
-/*     // LOG("================ The Forward HEAD ================="); */
-/*   //LOG("%s\n",header_buffer); */
-/*   //#endif */
-  
-/*   int len = strlen(buffer); */
-/*   send(dest_sock,buffer,len,0) ; */
-/* } */
-
-/* void handle_client(int client_sock, struct sockaddr_in client_addr,req_info tokens){ */
-/*   int is_http_tunnel = 0;  */
-/*   /\* if(strlen(tokens->host) == 0) { *\/ */
-/*   /\*    if(read_header(client_sock,header_buffer) < 0){ *\/ */
-/*   /\*      LOG("Read Http header failed\n"); *\/ */
-/*   /\*      return; *\/ */
-/*   /\*    } else { *\/ */
-/*   /\*      char * p = strstr(header_buffer,"CONNECT"); /\\*connect request?*\\/ *\/ */
-/*   /\*      if(p){ *\/ */
-/*   /\* 	 LOG("receive CONNECT request\n"); *\/ */
-/*   /\* 	 is_http_tunnel = 1; *\/ */
-/*   /\*      } *\/ */
-       
-/*   if ((remote_sock = create_connection()) < 0) { */
-/*     LOG("Cannot connect to host [%s:%d]\n",remote_host,remote_port); */
-/*     return; */
-/*   } */
-  
-/*   if (fork() == 0) { // 创建子进程用于从客户端转发数据到远端socket接口 */
-    
-/*     if(strlen(header_buffer) > 0 && !is_http_tunnel) { */
-/* 	forward_header(remote_sock); //普通的http请求先转发header */
-/*     }  */
-    
-/*     forward_data(client_sock, remote_sock); */
-/*     exit(0); */
-/*   } */
-/* } */
-  
