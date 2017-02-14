@@ -9,6 +9,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define BUFF_SIZE 1048576
+#define BUFF_SIZE 104800
 
 char* clientSock(char* host, char* port, char* buff);

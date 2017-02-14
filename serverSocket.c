@@ -82,7 +82,6 @@ int main(int argc, char const *argv[])
                 extract hostname, port to create socket
                 change request line from completed URL to partial URL
                 add host if header doesn't have
-                add User-Agent if head doesn't have
                 add connection & proxy-connection as "close" if header doesn't have
 
             Response parsing(resp)
@@ -101,7 +100,6 @@ int main(int argc, char const *argv[])
                     extract hostname, port to create socket
                     change request line from completed URL to partial URL
                     add host if header doesn't have
-                    add User-Agent if head doesn't have
                     add connection & proxy-connection as "close" if header doesn't have
                 build up server socket
                 wait for response
@@ -122,22 +120,30 @@ int main(int argc, char const *argv[])
         */
         req_info* reqinfo = (req_info *)malloc(sizeof(req_info));
         if(reqinfo == NULL){
-            printf("Allocation failed.\n");
+            perror("Allocation failed.\n");
             exit(EXIT_FAILURE);
         }
         char* sendbuff = parse_request(buff, reqinfo);
-        printf("Parsing result:\n%s\n", sendbuff);
+        printf("Length = %lu Parsing result:\n%s", strlen(sendbuff), sendbuff);
         /* If reqinfo->method == GET */
-        /* ReadCache(reqinfo->c_url); */
-            char* cache_result = readCache("http://www.cplusplus.com:6666/reference/unordered_map/unordered_map");
+        char* cache_result = NULL;
+        if(strcmp(reqinfo->method, "GET") == 0){
+            cache_result = readCache(reqinfo->c_url);
+        }
         char* newbuff;
         if(cache_result == NULL){
-            /* Server socket establishment */
-            /* newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff); */
-            newbuff = clientSock("www.cplusplus.com", "http", sendbuff);
+            printf("Method: %s\nService: %s\nHost: %s\nPort: %d\nCompURL: %s\nPartURL: %s\n", reqinfo->method, reqinfo->prtc, reqinfo->host, reqinfo->port, reqinfo->c_url, reqinfo->p_url);
+            //newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff);
+            newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff);
+            if(newbuff == NULL){
+                perror("Parsing failed\n");
+                exit(EXIT_FAILURE);
+            }
             /* If method == GET && status code == 200 */
-            /* allocCache(newbuff, reqinfo->c_url, reqinfo->time); */
-                allocCache(newbuff, "http://www.cplusplus.com:6666/reference/unordered_map/unordered_map", 10);
+            /* allocCache(newbuff, reqinfo->c_url, resinfo->time); */
+            if(strcmp(reqinfo->method, "GET") == 0){
+                allocCache(newbuff, reqinfo->c_url, EXPIRE_TIME);
+            }
             printCache();
         }
         else{
@@ -151,8 +157,6 @@ int main(int argc, char const *argv[])
         }
         printf("Response is successfully sent\n");
         close(conn_fd);
-
-        /* free(reqinfo->char*) */
         free(reqinfo);
         printf("Connection closed\n");
     }

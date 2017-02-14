@@ -1,13 +1,3 @@
-/*#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>*/
 #include "cache.h"
 
 cache* head = NULL;
@@ -17,7 +7,7 @@ int obj_num = 0;
 bool allocCache(char* buff, char* url, int extime){
 	int buffsize = strlen(buff)+1;
 	if(buffsize > MAX_OBJECT_SIZE){
-		printf("Failed. Response size = %d bytes is too big and won't be cached\n", buffsize);
+		printf("Cache response failed. Response size = %d bytes is too big and won't be cached\n", buffsize);
 		return false;
 	}
 	if(obj_num >= MAX_OBJECT_NUM){
@@ -40,7 +30,7 @@ bool allocCache(char* buff, char* url, int extime){
 	head = node;
 	head->next = temp;
 	head->prev = NULL;
-	printf("Success. Response is cached.\n");
+	printf("Cache response successfully\n");
 	return true;
 }
 

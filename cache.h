@@ -11,9 +11,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define MAX_OBJECT_NUM 4
-#define MAX_OBJECT_SIZE 1000
-#define EXPIRE_TIME 10
+#define MAX_OBJECT_NUM 128
+#define MAX_OBJECT_SIZE 1048576
+#define EXPIRE_TIME 100
 
 struct _cache{
 	char* url;
