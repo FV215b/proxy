@@ -10,23 +10,22 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define IS_SPACE(x) isspace((int)(x))
 
-#define BUF_SIZE  8192
-#define MAX_HEADER_SIZE  8192
 
-
-#define SERVER_SOCKET_ERROR  -1
-#define SERVER_SETSOCKOPT_ERROR -2
-#define SERVER_BIND_ERROR -3
-#define SERVER_LISTEN_ERROR -4
-#define CLIENT_SOCKET_ERROR -5
-#define CLIENT_RESOLVE_ERROR -6
-#define CLIENT_CONNECT_ERROR -7
-#define HEADER_BUFFER_FULL -8
-#define BAD_HTTP_PROTOCOL -9
-
+/* struct tm { */
+/*   int tm_sec;    /\* Seconds (0-60) *\/ */
+/*   int tm_min;    /\* Minutes (0-59) *\/ */
+/*   int tm_hour;   /\* Hours (0-23) *\/ */
+/*   int tm_mday;   /\* Day of the month (1-31) *\/ */
+/*   int tm_mon;    /\* Month (0-11) *\/ */
+/*   int tm_year;   /\* Year - 1900 *\/ */
+/*   int tm_wday;   /\* Day of the week (0-6, Sunday = 0) *\/ */
+/*   int tm_yday;   /\* Day in the year (0-365, 1 Jan = 0) *\/ */
+/*   int tm_isdst;  /\* Daylight saving time *\/ */
+/* }; */
 
 typedef struct req_info_t{
   char method[10];
@@ -42,9 +41,11 @@ typedef struct rsp_info_t{
   int code;
   char status[128];
   char server[128];
-  char date[128];
-  char expire[128];
-  
+  char cache[128];
+  char* date;
+  char* expire;
+  char* Etag;
+  char conncection[30];
 }rsp_info;
 
 void* memmem(const void*, size_t, const void*, size_t);

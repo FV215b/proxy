@@ -419,10 +419,12 @@ rsp_info* response_parser(char* buffer){
 		char* d_s = strstr(h_s,"Date: ");
 		if(!d_s){
 		  printf("No date header in the response\n");
+		  tokens->date = (char*)malloc(strlen("Unknown"));
 		  strncpy(tokens->date,"Unknown",strlen("Unknown"));
 		}else{
 		  char* d_e = strstr(d_s,"\r\n");
 		  //printf("DEBUG:s_e is:%s\n",s_e);
+		  tokens->date = (char*)malloc((int)(d_e - d_s)-6);
 		  strncpy(tokens->date, d_s+6,(int)(d_e - d_s)-6);
 #ifdef DEBUG
 		  printf("DEBUG: date is: %s\n", tokens->date);
@@ -432,13 +434,53 @@ rsp_info* response_parser(char* buffer){
 		//printf("DEBUG:e_s is:%s\n",e_s);
 		if(!e_s){
 		  printf("No expires header in the response\n");
+		  
+		  tokens->expire = (char*)malloc(strlen("Unknown"));       
 		  strncpy(tokens->expire,"Unknown",strlen("Unknown"));
 		}else{
 		  char* e_e = strstr(e_s,"\r\n");
 		  //printf("DEBUG:e_e is:%s\n",e_e);
+		  tokens->expire = (char*)malloc((int)(e_e - e_s)-9);  
 		  strncpy(tokens->expire, e_s+9,(int)(e_e - e_s)-9);
 #ifdef DEBUG
 		  printf("DEBUG: expire date is: %s\n", tokens->expire);
+#endif
+		}
+		char* ca_s = strstr(h_s, "Cache-Control: ");
+		if(!ca_s){
+		  printf("No cache-control header in response\n");
+		  strncpy(tokens->cache,"Unknown",strlen("Unknown"));
+		}else{
+		  char* ca_e = strstr(ca_s, "\r\n");
+		  strncpy(tokens->cache, ca_s + strlen( "Cache-Control: "), (int)(ca_e - ca_s));
+#ifdef DEBUG
+		   printf("DEBUG: cache-control is: %s\n", tokens->cache);
+#endif 
+		}
+		char* E_s = strstr(h_s, "Etag: ");
+		if(!E_s){
+		  printf("No Etag header in response\n");
+		  tokens->Etag = (char*)malloc(strlen("Unknown"));
+		  strncpy(tokens->Etag,"Unknown",strlen("Unknown"));
+		}else{
+		  char* E_e = strstr(E_s, "\r\n");
+		  tokens->Etag = (char*)malloc((int)(E_e - E_s)-6);
+		  strncpy(tokens->Etag, E_s+6,(int)(E_e - E_s)-6);
+#ifdef DEBUG
+		  printf("DEBUG:Etag is:%s\n",tokens->Etag);
+#endif
+		}
+		char* cn_s = strstr(h_s,"Connection: ");
+		if(!cn_s){
+		  printf("No connection header in response\n");
+	
+		  strncpy(tokens->connection,"Unknown",strlen("Unknown"));
+		}else{
+		  char* cn_e = strstr(cn_s,"\r\n");
+	
+		  strncpy(tokens->connection, cn_s+12,(int)(cn_e - cn_s)-12);
+#ifdef DEBUG
+		  printf("DEBUG:Connection is:%s\n",tokens->Connection);
 #endif
 		}
 	      }else{
