@@ -45,7 +45,7 @@ typedef struct rsp_info_t{
   char* date;
   char* expire;
   char* Etag;
-  char conncection[30];
+  char connection[30];
 }rsp_info;
 
 void* memmem(const void*, size_t, const void*, size_t);

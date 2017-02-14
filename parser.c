@@ -293,7 +293,7 @@ rsp_info* response_parser(char* buffer){
 	
 		  strncpy(tokens->connection, cn_s+12,(int)(cn_e - cn_s)-12);
 #ifdef DEBUG
-		  printf("DEBUG:Connection is:%s\n",tokens->Connection);
+		  printf("DEBUG:Connection is:%s\n",tokens->connection);
 #endif
 		}
 	      }else{

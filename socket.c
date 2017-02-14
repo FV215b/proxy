@@ -63,6 +63,8 @@ char* clientSock(char* host, char* port, char* buff){
         freeaddrinfo(clientlist);
         return NULL;
     }
+    //printf("Response from %s\n", s->ai_addr);
+    printf("Response length %d", receive_len);
     printf("Response:\n%s\n", newbuff);
     close(socket_fd);
     freeaddrinfo(clientlist);
