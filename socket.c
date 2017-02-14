@@ -64,12 +64,6 @@ char* clientSock(char* host, char* port, char* buff){
         }
         ret = realloc(ret, strlen(ret)+strlen(newbuff)+1);
         strcat(ret, newbuff);
-        /*else if(receive_len == 0){
-            printf("No response received\n");
-            close(socket_fd);
-            freeaddrinfo(clientlist);
-            return NULL;
-        }*/
     }while(receive_len != 0);
     //printf("Response from %s\n", s->ai_addr);
     printf("Response length %lu\n", strlen(ret));

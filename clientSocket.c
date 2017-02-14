@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
     printf("Message is successfully sent\n");
-    printf("MSG: %s\n", buff);
+    printf("%s\n", buff);
     char newbuff[BUFF_SIZE];
     memset(newbuff, 0, BUFF_SIZE);
     int receive_len = recv(socket_fd, newbuff, BUFF_SIZE, 0);
