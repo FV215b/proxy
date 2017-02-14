@@ -58,8 +58,7 @@ int main(int argc, char const *argv[])
         }
         printf("Build connection\n");
 
-        char buff[BUFF_SIZE];
-        char* requbuff = malloc(sizeof(char));
+        /*char* requbuff = malloc(sizeof(char));
         memset(requbuff, '\0', sizeof(char));
         int receive_len;
         do{
@@ -77,7 +76,21 @@ int main(int argc, char const *argv[])
             free(requbuff);
             exit(EXIT_FAILURE);
         }
-        printf("%s\n", requbuff);
+        printf("%s\n", requbuff);*/
+        char buff[BUFF_SIZE];
+        memset(buff, 0, BUFF_SIZE);
+        int receive_len = recv(conn_fd, buff, BUFF_SIZE, 0);
+        if(receive_len < 0){
+            perror("Failed to receive response\n");
+            printf("%d: %s\n", errno, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        else if(receive_len == 0){
+            printf("No response received\n");
+        }
+        else{
+            printf("%s\n", buff);
+        }
 
         //req_sock *newsock;
         //char *newbuff = parsingRequest(buff, newsock);
@@ -128,8 +141,8 @@ int main(int argc, char const *argv[])
             perror("Allocation failed.\n");
             exit(EXIT_FAILURE);
         }
-        char* sendbuff = parse_request(requbuff, reqinfo);
-        free(requbuff);
+        char* sendbuff = parse_request(buff, reqinfo);
+        //free(requbuff);
         printf("Length = %lu Parsing result:\n%s", strlen(sendbuff), sendbuff);
         /* If reqinfo->method == GET */
         char* cache_result = NULL;
