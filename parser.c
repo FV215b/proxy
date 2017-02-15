@@ -2,12 +2,6 @@
 
 #define DEBUG
 
-//char* buffer = "   CONNECT ftp://www.cmu.edu:8088/hub/index.html HTTP/1.1 lala \r\nthis is a bullshit header\r\nConnection:close\r\n\r\n";
-
-
-
-/*extract information from the request_line buffer*/
-/*req_sock = tokens->host, req_serv = tokens->prtc*/
 char* parse_request(char* buffer, req_info* tokens){
   char* m_s = buffer;
   char* m_e = strchr(m_s,' '); 
@@ -25,9 +19,9 @@ char* parse_request(char* buffer, req_info* tokens){
   /* completed URL */
   m_s = m_e + 1;
   m_e = strchr(m_s,' '); 
-  tokens->c_url = (char*)malloc((int)(m_e - m_s + 1)); 
+  tokens->c_url = (char*)malloc((int)(m_e - m_s + 1));
+  memset(tokens->c_url, '\0', (int)(m_e - m_s + 1)); 
   strncpy(tokens->c_url, m_s, (int)(m_e - m_s));
-  strcat(tokens->c_url, "");
 
   /* protocol */
   m_e = strstr(m_s, "://"); 
@@ -42,36 +36,37 @@ char* parse_request(char* buffer, req_info* tokens){
   	/* host */
     m_e = strchr(m_s, ':');
     tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
+    memset(tokens->host, '\0', (int)(m_e - m_s + 1));
 	  strncpy(tokens->host, m_s, (int)(m_e - m_s));
-	  strcat(tokens->host, "");
 	  m_s = m_e + 1;
     if(strchr(m_s, '/') != NULL && strchr(m_s, '/') < strchr(m_s, ' ')){ // has partial URL e.g. www.google.com:8080/maps HTTP/1.1\r\n
       /* port */
       m_e = strchr(m_s, '/'); 
       char* temp = malloc((int)(m_e - m_s + 1)); 
+      memset(temp, '\0', (int)(m_e - m_s + 1));
 	    strncpy(temp, m_s, (int)(m_e - m_s));
-	    strcat(temp, "");
       tokens->port = atoi(temp);
       free(temp);
       m_s = m_e;
 	  
 	  /* Partial URL */
 	    m_e = strchr(m_s, ' ');
-      tokens->p_url = (char*)malloc((int)(m_e - m_s + 1)); 
-	    strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
-	    strcat(tokens->p_url, "");
+      tokens->p_url = (char*)malloc((int)(m_e - m_s + 1));
+	    memset(tokens->p_url, '\0', (int)(m_e - m_s + 1));
+      strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
     }
     else{ // no partial URL e.g. www.google.com:8080 HTTP/1.1\r\n
       /* port */
       m_e = strchr(m_s, ' '); 
       char* temp = malloc((int)(m_e - m_s + 1)); 
-	    strncpy(temp, m_s, (int)(m_e - m_s));
-	    strcat(temp, "");
+	    memset(temp, '\0', (int)(m_e - m_s + 1));
+      strncpy(temp, m_s, (int)(m_e - m_s));
       tokens->port = atoi(temp);
       free(temp);
 
       /* partial URL */
       tokens->p_url = (char*)malloc(2*sizeof(char));
+      memset(tokens->p_url, '\0', 2*sizeof(char));
       strcat(tokens->p_url, "/");
     }
   }
@@ -80,25 +75,26 @@ char* parse_request(char* buffer, req_info* tokens){
       /* Host */
       m_e = strchr(m_s, '/');
       tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
-	    strncpy(tokens->host, m_s, (int)(m_e - m_s));
-	    strcat(tokens->host, "");
+	    memset(tokens->host, '\0', (int)(m_e - m_s + 1));
+      strncpy(tokens->host, m_s, (int)(m_e - m_s));
 	    m_s = m_e;
 	  
 	    /* Partial URL */
 	    m_e = strchr(m_s, ' ');
       tokens->p_url = (char*)malloc((int)(m_e - m_s + 1)); 
-	    strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
-	    strcat(tokens->p_url, "");
+	    memset(tokens->p_url, '\0', (int)(m_e - m_s + 1));
+      strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
     }
     else{ //  no partial URL e.g. www.google.com HTTP/1.1
       /* Host */
       m_e = strchr(m_s, ' ');
       tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
-	    strncpy(tokens->host, m_s, (int)(m_e - m_s));
-	    strcat(tokens->host, "");
+	    memset(tokens->host, '\0', (int)(m_e - m_s + 1));
+      strncpy(tokens->host, m_s, (int)(m_e - m_s));
 
       /* Partial URL */
       tokens->p_url = (char*)malloc(2*sizeof(char));
+      memset(tokens->p_url, '\0', 2*sizeof(char));
       strcat(tokens->p_url, "/");
     }
     /* Port */
@@ -122,7 +118,7 @@ char* parse_request(char* buffer, req_info* tokens){
   	need_conn = 1;
   }
   char* http = "HTTP/1.1";
-  char* clos = "Keep-Alive";
+  char* clos = "close";
   size_t alloclen = strlen(tokens->method)+strlen(tokens->p_url)+strlen(http)+2 + need_host*(strlen(str_host)+strlen(tokens->host)) + need_conn*(strlen(str_conn)+strlen(clos)) + strlen(m_s)+1;
   char* ans = malloc(alloclen);
   if(ans == NULL){
@@ -143,6 +139,10 @@ char* parse_request(char* buffer, req_info* tokens){
   	strcat(ans, str_conn);
   	strcat(ans, clos);
   }
+  m_e = strstr(m_s, "\r\nProxy-Connection: ");
+  strncat(ans, m_s, (int)(m_e - m_s));
+  m_e += 2;
+  m_s = strstr(m_e, "\r\n");
   strcat(ans, m_s);
   return ans;
 }

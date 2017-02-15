@@ -8,8 +8,11 @@
 #include <unistd.h>
 #include <errno.h>
 #define BUFF_SIZE 104800
-#define MSG "GET http://www.cplusplus.com/reference/unordered_map/unordered_map/ HTTP/1.1\r\nHost: www.cplusplus.com\r\nProxy-Connection: Keep-Alive\r\n\r\n"
-#define MSGoogle "GET https://www.google.com/ HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG1 "GET http://www.cplusplus.com/reference/unordered_map/unordered_map/ HTTP/1.1\r\nHost: www.cplusplus.com\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG2 "CONNECT https://www.google.com/ HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG3 "GET http://stackoverflow.com/questions/37907986/error-in-recover-free-invalid-next-size-normal HTTP/1.1\r\nHost: stackoverflow.com\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG4 "GET http://beej.us/guide/bgnet/output/html/multipage/getaddrinfoman.html HTTP/1.1\r\nHost: beej.us\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG5 "GET http://pubs.opengroup.org/onlinepubs/9699919799/functions/strncat.html HTTP/1.1\r\nHost: pubs.opengroup.org\r\nProxy-Connection: Keep-Alive\r\n\r\n"
 int main(int argc, char const *argv[])
 {
     if(argc != 2){
@@ -21,7 +24,7 @@ int main(int argc, char const *argv[])
         perror("Engaging reserved port is banned\n");
         exit(EXIT_FAILURE);
     }
-    char *buff = MSG;
+    char *buff = MSG3;
     struct sockaddr_in client;
     unsigned int socket_len = sizeof(client);
     
@@ -56,20 +59,27 @@ int main(int argc, char const *argv[])
     printf("Message is successfully sent\n");
     printf("%s\n", buff);
     char newbuff[BUFF_SIZE];
-    memset(newbuff, 0, BUFF_SIZE);
-    int receive_len = recv(socket_fd, newbuff, BUFF_SIZE, 0);
-    if(receive_len < 0){
-        perror("Failed to receive response\n");
-        printf("%d: %s\n", errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    else if(receive_len == 0){
-        printf("No response received\n");
-    }
-    else{
-        printf("%s\n", newbuff);
-    }
+    int receive_len;
+    char* ret = malloc(sizeof(char));
+    memset(ret, 0, sizeof(char));
+    do{
+        memset(newbuff, '\0', BUFF_SIZE);
+        receive_len = read(socket_fd, newbuff, BUFF_SIZE);
+        printf("receive length = %d\n", receive_len);
+        printf("newbuff length = %lu\n", strlen(newbuff));
+        if(receive_len < 0){
+            perror("Failed to receive response\n");
+            printf("%d: %s\n", errno, strerror(errno));
+            close(socket_fd);
+            free(ret);
+            exit(EXIT_FAILURE);
+        }
+        ret = realloc(ret, strlen(ret)+receive_len+1);
+        strcat(ret, newbuff);
+    }while(receive_len != 0);
+    printf("Response length %lu\n", strlen(ret));
+    printf("Response:\n%s\n", ret);
     close(socket_fd);
-
+    free(ret);
     return EXIT_SUCCESS;
 }
