@@ -66,7 +66,7 @@ char* clientSock(char* host, char* port, char* buff){
         strcat(ret, newbuff);
     }while(receive_len != 0);
     printf("Response length %lu\n", strlen(ret));
-    printf("Response:\n%s\n", ret);
+    //printf("Response:\n%s\n", ret);
     close(socket_fd);
     freeaddrinfo(clientlist);
     return ret;

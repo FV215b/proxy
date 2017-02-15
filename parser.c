@@ -8,13 +8,13 @@ char* parse_request(char* buffer, req_info* tokens){
 
   /* method */
   for(int i = 0; i < 10; i++){
-	tokens->method[i] = '\0';
+	  tokens->method[i] = '\0';
   }
-  strncpy(tokens->method, m_s, (int)(m_e - m_s)); //copy into method[]
-  if(strcasecmp(tokens->method, "GET") && strcasecmp(tokens->method, "POST") && strcasecmp(tokens->method, "CONNECT")) {
-	printf("This method cannot be implemented\n");
-	return NULL;
-  }
+  strncpy(tokens->method, m_s, (int)(m_e - m_s));
+  /*if(strcasecmp(tokens->method, "GET") && strcasecmp(tokens->method, "POST") && strcasecmp(tokens->method, "CONNECT")) {
+	  printf("This method cannot be implemented\n");
+	  return NULL;
+  }*/
 
   /* completed URL */
   m_s = m_e + 1;
@@ -148,178 +148,78 @@ char* parse_request(char* buffer, req_info* tokens){
 }
 
 
-rsp_info* response_parser(char* buffer){
-#ifdef DEBUG
-  printf("START:\n");
-#endif
+rsp_info* parse_response(char* buffer){
   rsp_info* tokens = (rsp_info*)malloc(sizeof(rsp_info));
-  if(tokens == NULL){
-    free(tokens);
-    perror("Failed to malloc\n");
-    return NULL;
+  char* m_s = buffer;
+  char* m_e = strstr(m_s, "\r\n");
+  char* c_s = m_e + 2;
+  // status
+  tokens->status = malloc((int)(m_e - m_s + 1));
+  memset(tokens->status, '\0', (int)(m_e - m_s + 1));
+  strncpy(tokens->status, m_s, (int)(m_e - m_s));
+
+  m_s = strchr(m_s, ' ') + 1;
+  m_e = strchr(m_s, ' ');
+  // code
+  char* temp = malloc((int)(m_e - m_s + 1));
+  memset(temp, '\0', (int)(m_e - m_s + 1));
+  strncpy(temp, m_s, (int)(m_e - m_s));
+  tokens->code = atoi(temp);
+  free(temp);
+  // date
+  if((m_s = strstr(c_s, "\r\nDate: ")) != NULL){
+    m_s = strchr(m_s, ' ') + 1;
+    m_e = strstr(m_s, "\r\n");
+    tokens->date = malloc((int)(m_e - m_s + 1));
+    memset(tokens->date, '\0', (int)(m_e - m_s + 1));
+    strncpy(tokens->date, m_s, (int)(m_e - m_s));
   }
-#ifdef DEBUG
-  printf("malloced for tokens\n");
-#endif
-  const char* curPos = buffer;
-  const char* endline = (const char*)memmem(curPos,strlen(buffer)-(curPos-buffer),"\r\n",2);
-  if(endline == 0){
-    printf("Request doesn't end with \\r\\n\n");
-    return NULL;
+  else{
+    tokens->date = NULL;
   }
-  size_t i = 0;
-  //skip space
-  while(IS_SPACE(buffer[i])){
-    i++;
+  // length
+  if((m_s = strstr(c_s, "\r\nContent-Length: ")) != NULL){
+    m_s = strchr(m_s, ' ') + 1;
+    m_e = strstr(m_s, "\r\n");
+    tokens->length = malloc((int)(m_e - m_s + 1));
+    memset(tokens->length, '\0', (int)(m_e - m_s + 1));
+    strncpy(tokens->length, m_s, (int)(m_e - m_s));
   }
-#ifdef DEBUG
-  printf("skiped space\n");
-#endif
-  if(i >= strlen(buffer)-1){
-    printf("Too many spaces, out of buffer bound\n");
-    return NULL;
+  else{
+    tokens->length = NULL;
   }
-  char* m_s = buffer+i; //first non-space char, should be the start of the method
-  if(m_s){
-#ifdef DEBUG
-    printf("The input response line is:%s\n", m_s);
-#endif
-    char* H_e = strstr(m_s,"HTTP/1.1"); //first space after the start, should be the end of the method
-    if(H_e){
-      char* c_s = strchr(H_e,' ');
-      if(c_s){
-	char* c_e = strchr(c_s + 1, ' ');
-	if(c_e){
-	  char s_code[10];  
-	  strncpy(s_code, c_s, (int)(c_e - c_s));
-#ifdef DEBUG
-	  printf("DEBUG: status code is: %s\n", s_code);
-#endif
-	  tokens->code = atoi(s_code); //convert status code string into int
-#ifdef DEBUG
-	  printf("DEBUG: status code int is: %d\n", tokens->code);
-#endif
-	  while(IS_SPACE(*(c_e + 1))){
-	    c_e++;
-	  }
-	  char* m_s = c_e + 1; //start of the status message
-	  if(m_s){
-	    char* m_e = strstr(m_s,"\r\n");
-	    if(m_e){
-	      strncpy(tokens->status, m_s, (int)(m_e - m_s));
-#ifdef DEBUG
-	      printf("DEBUG: status message is: %s\n", tokens->status);
-#endif
-	      while(IS_SPACE(*(m_e + 2))){
-		m_e++;
-	      }
-	      char* h_s = m_e+2; //start of the headers
-	      if(h_s){ //find the server and the date
-		char* s_s = strstr(h_s, "Server: ");
-		if(!s_s){
-		  printf("No server header in the response\n");
-		  strncpy(tokens->server,"Unknown",strlen("Unknown"));
-		  
-		}else{
-		  char* s_e = strstr(s_s,"\r\n");
-		  //printf("DEBUG:s_e is:%s\n",s_e);
-		  strncpy(tokens->server, s_s+8,(int)(s_e - s_s)-8);
-#ifdef DEBUG
-		  printf("DEBUG: server who send response is: %s\n", tokens->server);
-#endif
-		}
-		char* d_s = strstr(h_s,"Date: ");
-		if(!d_s){
-		  printf("No date header in the response\n");
-		  tokens->date = (char*)malloc(strlen("Unknown"));
-		  strncpy(tokens->date,"Unknown",strlen("Unknown"));
-		}else{
-		  char* d_e = strstr(d_s,"\r\n");
-		  //printf("DEBUG:s_e is:%s\n",s_e);
-		  tokens->date = (char*)malloc((int)(d_e - d_s)-6);
-		  strncpy(tokens->date, d_s+6,(int)(d_e - d_s)-6);
-#ifdef DEBUG
-		  printf("DEBUG: date is: %s\n", tokens->date);
-#endif
-		}
-		char* e_s = strstr(h_s, "Expires: ");
-		//printf("DEBUG:e_s is:%s\n",e_s);
-		if(!e_s){
-		  printf("No expires header in the response\n");
-		  
-		  tokens->expire = (char*)malloc(strlen("Unknown"));       
-		  strncpy(tokens->expire,"Unknown",strlen("Unknown"));
-		}else{
-		  char* e_e = strstr(e_s,"\r\n");
-		  //printf("DEBUG:e_e is:%s\n",e_e);
-		  tokens->expire = (char*)malloc((int)(e_e - e_s)-9);  
-		  strncpy(tokens->expire, e_s+9,(int)(e_e - e_s)-9);
-#ifdef DEBUG
-		  printf("DEBUG: expire date is: %s\n", tokens->expire);
-#endif
-		}
-		char* ca_s = strstr(h_s, "Cache-Control: ");
-		if(!ca_s){
-		  printf("No cache-control header in response\n");
-		  strncpy(tokens->cache,"Unknown",strlen("Unknown"));
-		}else{
-		  char* ca_e = strstr(ca_s, "\r\n");
-		  strncpy(tokens->cache, ca_s + strlen( "Cache-Control: "), (int)(ca_e - ca_s));
-#ifdef DEBUG
-		   printf("DEBUG: cache-control is: %s\n", tokens->cache);
-#endif 
-		}
-		char* E_s = strstr(h_s, "Etag: ");
-		if(!E_s){
-		  printf("No Etag header in response\n");
-		  tokens->Etag = (char*)malloc(strlen("Unknown"));
-		  strncpy(tokens->Etag,"Unknown",strlen("Unknown"));
-		}else{
-		  char* E_e = strstr(E_s, "\r\n");
-		  tokens->Etag = (char*)malloc((int)(E_e - E_s)-6);
-		  strncpy(tokens->Etag, E_s+6,(int)(E_e - E_s)-6);
-#ifdef DEBUG
-		  printf("DEBUG:Etag is:%s\n",tokens->Etag);
-#endif
-		}
-		char* cn_s = strstr(h_s,"Connection: ");
-		if(!cn_s){
-		  printf("No connection header in response\n");
-	
-		  strncpy(tokens->connection,"Unknown",strlen("Unknown"));
-		}else{
-		  char* cn_e = strstr(cn_s,"\r\n");
-	
-		  strncpy(tokens->connection, cn_s+12,(int)(cn_e - cn_s)-12);
-#ifdef DEBUG
-		  printf("DEBUG:Connection is:%s\n",tokens->connection);
-#endif
-		}
-	      }else{
-		printf("No header fields\n");
-	      }
-	    }else{
-	      printf("status doesn't end with \\r\\n\n");
-	      return NULL;
-	    }
-	  }else{
-	    printf("Nothing after the status code\n");
-	    return NULL;
-	  }  
-	}else{
-	  printf("no space after version\n");
-	  return NULL;
-	}
-      }else{
-	printf("version not end with space\n");
-	return NULL;
-      }
-    }else{
-      printf("No protocol version in response\n");
-      return NULL;
-    }
-    
-    
+  // cache
+  if((m_s = strstr(c_s, "\r\nCache-Control: ")) != NULL){
+    m_s = strchr(m_s, ' ') + 1;
+    m_e = strstr(m_s, "\r\n");
+    tokens->cache = malloc((int)(m_e - m_s + 1));
+    memset(tokens->cache, '\0', (int)(m_e - m_s + 1));
+    strncpy(tokens->cache, m_s, (int)(m_e - m_s));
+  }
+  else{
+    tokens->cache = NULL;
+  }
+  // expires
+  if((m_s = strstr(c_s, "\r\nExpires: ")) != NULL){
+    m_s = strchr(m_s, ' ') + 1;
+    m_e = strstr(m_s, "\r\n");
+    tokens->expire = malloc((int)(m_e - m_s + 1));
+    memset(tokens->expire, '\0', (int)(m_e - m_s + 1));
+    strncpy(tokens->expire, m_s, (int)(m_e - m_s));
+  }
+  else{
+    tokens->expire = NULL;
+  }
+  // etag
+  if((m_s = strstr(c_s, "\r\nEtag: ")) != NULL){
+    m_s = strchr(m_s, ' ') + 1;
+    m_e = strstr(m_s, "\r\n");
+    tokens->etag = malloc((int)(m_e - m_s + 1));
+    memset(tokens->etag, '\0', (int)(m_e - m_s + 1));
+    strncpy(tokens->etag, m_s, (int)(m_e - m_s));
+  }
+  else{
+    tokens->etag = NULL;
   }
   return tokens;
 }

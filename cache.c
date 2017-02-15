@@ -15,9 +15,12 @@ bool allocCache(char* buff, char* url, int extime){
 	}
 	obj_num += 1;
 	cache* node = (cache *)malloc(sizeof(cache));
+	memset(node, '\0', sizeof(cache));
 	node->url = (char *)malloc(strlen(url)+1);
+	memset(node->url, '\0', strlen(url)+1);
 	strcpy(node->url, url);
 	node->res = (char *)malloc(buffsize);
+	memset(node->res, '\0', buffsize);
 	strcpy(node->res, buff);
 	node->ext = extime;
 	cache* temp = head;

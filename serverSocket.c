@@ -79,8 +79,38 @@ int main(int argc, char const *argv[])
         char* sendbuff = parse_request(buff, reqinfo);
         printf("Length = %lu\nParsing result:\n%s", strlen(sendbuff), sendbuff);
         printf("Method: %s\nService: %s\nHost: %s\nPort: %d\nCompURL: %s\nPartURL: %s\n", reqinfo->method, reqinfo->prtc, reqinfo->host, reqinfo->port, reqinfo->c_url, reqinfo->p_url);
-        char* newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff);
-        int send_status = send(conn_fd, newbuff, strlen(newbuff)+1, 0);
+        char* cache_read = NULL;
+        if(strcmp(reqinfo->method, "GET") == 0){
+            cache_read = readCache(reqinfo->c_url);
+        }
+        int send_status;
+        if(cache_read == NULL){
+            char* newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff);
+            rsp_info* rspinfo;
+            rspinfo = parse_response(newbuff);
+            if(strcmp(reqinfo->method, "GET") == 0 && rspinfo->code == 200){
+                allocCache(newbuff, reqinfo->c_url, 3);
+            }
+            send_status = send(conn_fd, newbuff, strlen(newbuff)+1, 0);
+            if(rspinfo->date != NULL){
+                free(rspinfo->date);
+            }
+            if(rspinfo->expire != NULL){
+                free(rspinfo->expire);
+            }
+            if(rspinfo->length != NULL){
+                free(rspinfo->length);
+            }
+            if(rspinfo->cache != NULL){
+                free(rspinfo->cache);
+            }
+            free(rspinfo->status);
+            free(rspinfo);
+            free(newbuff);
+        }
+        else{
+            send_status = send(conn_fd, cache_read, strlen(cache_read)+1, 0);
+        }
         if(send_status < 0){
             perror("Failed to send response\n");
             exit(EXIT_FAILURE);
@@ -91,7 +121,7 @@ int main(int argc, char const *argv[])
         free(reqinfo->c_url);
         free(reqinfo->p_url);
         free(reqinfo);
-        free(newbuff);
+        
         printf("Connection closed\n");
     }
 
