@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 
 #define MAX_OBJECT_NUM 128
 #define MAX_OBJECT_SIZE 10485760
@@ -25,9 +26,13 @@ struct _cache{
 typedef struct _cache cache;
 
 //char* parsingRequest(char *buff, req_sock *sock);
+
+char* getLoctime();
+double curMinusDate(char*);
+double expMinusDate(char*, char*);
 bool allocCache(char* buff, char* url, int extime);
 char* readCache(char* url);
 bool scanCache(char* url);
-void moveCache(cache* curr);
-void deleteCache(cache* curr);
+void moveCache(struct _cache* curr);
+void deleteCache(struct _cache* curr);
 void printCache();
