@@ -46,7 +46,11 @@ int main(int argc, char const *argv[])
         perror("Listen error\n");
         exit(EXIT_FAILURE);
     }
-
+    int daemon_status = daemon(0, 1);
+    if(daemon_status != 0){
+        perror("Daemon create failed\n");
+        exit(EXIT_FAILURE);
+    }
     /* Accept */
     while(1){
         int conn_fd = accept(socket_fd, (struct sockaddr *)&server, &socket_len);
