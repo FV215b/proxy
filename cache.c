@@ -1,4 +1,50 @@
 #include "cache.h"
+#define DEBUG
+
+char* getLoctime(){
+  time_t curtime;
+  struct tm* loc_time;
+  curtime = time(NULL);
+  loc_time = localtime(&curtime);
+  char* curr = asctime(loc_time);
+#ifdef DEBUG
+  printf("getLoctime is:%s\n", curr);
+#endif
+  char* time = malloc(strlen(curr)+1);
+  memset(time, '\0', strlen(curr)+1);
+  strcpy(time, curr);
+  return time; 
+}
+
+double expMinusDate(char* date, char* expire){
+  struct tm d;
+  struct tm e;
+  strptime(date, "%a, %d %b %Y %H:%M:%S GMT", &d);
+  strptime(expire, "%a, %d %b %Y %H:%M:%S GMT", &e);
+  time_t date_t = mktime(&d);  
+  time_t expire_t = mktime(&e);  
+  double diff = difftime(expire_t, date_t);
+#ifdef DEBUG
+  printf("expire - date in seconds is: %f\n", diff);
+#endif
+  return diff;
+}
+
+double curMinusDate(char* date){
+  char* curr = getLoctime();
+  struct tm c;
+  strptime(curr, "%a, %b %d %H:%M:%S %Y", &c);
+  struct tm d;
+  strptime(date, "%a, %d %b %Y %H:%M:%S GMT", &d);
+  time_t date_t = mktime(&d);
+  time_t curr_t = mktime(&c);
+  double diff = difftime(curr_t, date_t);
+#ifdef DEBUG
+  printf("curr - date in seconds is: %f\n", diff);
+#endif
+  return diff;  
+}
+
 
 cache* head = NULL;
 cache* tail = NULL;
