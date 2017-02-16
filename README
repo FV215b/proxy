@@ -14,18 +14,20 @@ Finally, there are some security issues related to the potential risks and dange
 
 ========================================================================================================
 The project includes the following files:
-Makefile
-Makefile_cache
-cache.h	cache.c  cache.o
-cache_policy.h  cache_policy.c  cache_policy.o
-log.h    log.c	 log.o
-parser.h parser.c	parser.o
-socket.h  socket.c  socket.o
-serverSocket.c  serverSocket.o  serverSocket
-clientSocket.c
-dangers.txt
+Makefile	cache.h		log.c		parser.h	socket.h
+README		clientSocket.c	log.h		serverSocket.c
+cache.c		dangers.txt	parser.c	socket.c
 
 Please see our comments in each file for details about the code.
+
+=======================================================================================================
+To run the program, please follow the instruction below:
+Note: Please run the code under a linux machine environment
+1 Open two terminal;
+2 In terminal 1: make clean; make (To compile and build the executable files)
+3 In terminal 2: gcc -o clientSocket clientSocket.c
+4 In terminal 1: ./serverSocket <port>
+5 In terminal 2: ./clientSocket <port> <number 1 - 7>(refer to the corresponding command line number)
 
 ********************************************************************************************************
 Reference:
