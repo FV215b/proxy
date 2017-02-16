@@ -11,21 +11,22 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define MAX_OBJECT_NUM 128
-#define MAX_OBJECT_SIZE 10485760
-#define EXPIRE_TIME 100
+#define MAX_OBJECT_NUM 1024
+#define MAX_OBJECT_SIZE 1073741824
+#define EXPIRE_TIME 10000.0
 
 struct _cache{
 	char* url;
 	char* res;
-	int ext;
+	char* date;
+	double ext;
 	struct _cache* next;
 	struct _cache* prev;
 };
 typedef struct _cache cache;
 
 //char* parsingRequest(char *buff, req_sock *sock);
-bool allocCache(char* buff, char* url, int extime);
+bool allocCache(char* buff, char* url, char* date, double extime);
 char* readCache(char* url);
 bool scanCache(char* url);
 void moveCache(cache* curr);

@@ -21,6 +21,7 @@ typedef struct req_info_t{
   int port;
   char* c_url;
   char* p_url;
+  char* header;
 }req_info;
 
 typedef struct rsp_info_t{

@@ -4,7 +4,7 @@ cache* head = NULL;
 cache* tail = NULL;
 int obj_num = 0;
 
-bool allocCache(char* buff, char* url, int extime){
+bool allocCache(char* buff, char* url, char* date, double extime){
 	int buffsize = strlen(buff)+1;
 	if(buffsize > MAX_OBJECT_SIZE){
 		printf("Cache response failed. Response size = %d bytes is too big and won't be cached\n", buffsize);
@@ -22,6 +22,9 @@ bool allocCache(char* buff, char* url, int extime){
 	node->res = (char *)malloc(buffsize);
 	memset(node->res, '\0', buffsize);
 	strcpy(node->res, buff);
+	node->date = (char *)malloc(strlen(date)+1);
+	memset(node->date, '\0', strlen(date)+1);
+	strcpy(node->date, date);
 	node->ext = extime;
 	cache* temp = head;
 	if(head != NULL){
@@ -59,15 +62,21 @@ char* readCache(char* url){
 bool scanCache(char* url){
 	cache* curr = head;
 	bool found = false;
+	// int status = 0;
 	while(curr != NULL){
 		curr->ext -= 1;
+		//if(isExpired(curr->date, curr->ext) == 1){
 		if(curr->ext <= 0){
+			if(strcmp(curr->url, url) == 0){
+				// status = 1;
+			}
 			cache* temp = curr;
 			curr = curr->next;
 			deleteCache(temp);
 			continue;
 		}
 		if(strcmp(curr->url, url) == 0){
+			// status = 2;
 			cache* temp = curr;
 			curr = curr->next;
 			moveCache(temp);
@@ -76,6 +85,7 @@ bool scanCache(char* url){
 		}
 		curr = curr->next;
 	}
+	// cacheStatus(status);
 	return found;
 }
 
@@ -118,6 +128,7 @@ void deleteCache(cache* curr){
 	else{
 		tail = pre;
 	}
+	free(curr->date);
 	free(curr->url);
 	free(curr->res);
 	free(curr);
@@ -128,7 +139,7 @@ void printCache(){
 	cache* curr = head;
 	printf("Cache number: %d\n", obj_num);
 	while(curr != NULL){
-		printf("%s: %s\nexp: %d\n", curr->url, curr->res, curr->ext);
+		printf("%s: %s\nexp: %f\n", curr->url, curr->res, curr->ext);
 		curr = curr->next;
 	}
 }

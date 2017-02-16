@@ -4,7 +4,12 @@
 
 char* parse_request(char* buffer, req_info* tokens){
   char* m_s = buffer;
-  char* m_e = strchr(m_s,' '); 
+  char* m_e = strstr(m_s, "\r\n");
+  tokens->header = (char*)malloc((int)(m_e - m_s + 1));
+  memset(tokens->header, '\0', (int)(m_e - m_s + 1)); 
+  strncpy(tokens->header, m_s, (int)(m_e - m_s));
+  m_s = buffer;
+  m_e = strchr(m_s, ' '); 
 
   /* method */
   for(int i = 0; i < 10; i++){
@@ -25,26 +30,37 @@ char* parse_request(char* buffer, req_info* tokens){
 
   /* protocol */
   m_e = strstr(m_s, "://"); 
+printf("1st str\n");
   for(int i = 0; i < 10; i++){
   	tokens->prtc[i] = '\0';
   }
-  strncpy(tokens->prtc, m_s, (int)(m_e - m_s));
-  
+  if(m_e != NULL){
+    strncpy(tokens->prtc, m_s, (int)(m_e - m_s));
+    m_s = m_e + 3; //3 is the length of "://"
+  }
+  else{
+    m_s = strchr(buffer, ' ') + 1;
+  }
+printf("1st strncp\n");
   /* host, port, partial URL */
-  m_s = m_e + 3; //3 is the length of "://"
   if(strchr(m_s, ':') != NULL && strchr(m_s, ':') < strchr(m_s, ' ')){ // has port e.g. www.google.com:8080/maps HTTP/1.1\r\n
   	/* host */
     m_e = strchr(m_s, ':');
     tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
     memset(tokens->host, '\0', (int)(m_e - m_s + 1));
 	  strncpy(tokens->host, m_s, (int)(m_e - m_s));
+printf("2nd strncp\n");
 	  m_s = m_e + 1;
     if(strchr(m_s, '/') != NULL && strchr(m_s, '/') < strchr(m_s, ' ')){ // has partial URL e.g. www.google.com:8080/maps HTTP/1.1\r\n
       /* port */
       m_e = strchr(m_s, '/'); 
       char* temp = malloc((int)(m_e - m_s + 1)); 
       memset(temp, '\0', (int)(m_e - m_s + 1));
-	    strncpy(temp, m_s, (int)(m_e - m_s));
+      strncpy(temp, m_s, (int)(m_e - m_s));
+      if(strcmp(tokens->prtc, "") == 0){
+        strcpy(tokens->prtc, temp);
+      }
+printf("3rd strncp\n");
       tokens->port = atoi(temp);
       free(temp);
       m_s = m_e;
@@ -54,6 +70,7 @@ char* parse_request(char* buffer, req_info* tokens){
       tokens->p_url = (char*)malloc((int)(m_e - m_s + 1));
 	    memset(tokens->p_url, '\0', (int)(m_e - m_s + 1));
       strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
+printf("4th strncp\n");
     }
     else{ // no partial URL e.g. www.google.com:8080 HTTP/1.1\r\n
       /* port */
@@ -61,6 +78,10 @@ char* parse_request(char* buffer, req_info* tokens){
       char* temp = malloc((int)(m_e - m_s + 1)); 
 	    memset(temp, '\0', (int)(m_e - m_s + 1));
       strncpy(temp, m_s, (int)(m_e - m_s));
+printf("5th strncp\n");
+      if(strcmp(tokens->prtc, "") == 0){
+        strcpy(tokens->prtc, temp);
+      }
       tokens->port = atoi(temp);
       free(temp);
 
@@ -77,6 +98,7 @@ char* parse_request(char* buffer, req_info* tokens){
       tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
 	    memset(tokens->host, '\0', (int)(m_e - m_s + 1));
       strncpy(tokens->host, m_s, (int)(m_e - m_s));
+printf("6th strncp\n");
 	    m_s = m_e;
 	  
 	    /* Partial URL */
@@ -84,6 +106,7 @@ char* parse_request(char* buffer, req_info* tokens){
       tokens->p_url = (char*)malloc((int)(m_e - m_s + 1)); 
 	    memset(tokens->p_url, '\0', (int)(m_e - m_s + 1));
       strncpy(tokens->p_url, m_s, (int)(m_e - m_s));
+printf("7th strncp\n");
     }
     else{ //  no partial URL e.g. www.google.com HTTP/1.1
       /* Host */
@@ -91,16 +114,20 @@ char* parse_request(char* buffer, req_info* tokens){
       tokens->host = (char*)malloc((int)(m_e - m_s + 1)); 
 	    memset(tokens->host, '\0', (int)(m_e - m_s + 1));
       strncpy(tokens->host, m_s, (int)(m_e - m_s));
-
+printf("8th strncp\n");
       /* Partial URL */
       tokens->p_url = (char*)malloc(2*sizeof(char));
       memset(tokens->p_url, '\0', 2*sizeof(char));
       strcat(tokens->p_url, "/");
     }
     /* Port */
+    if(strcmp(tokens->prtc, "") == 0){
+        strcpy(tokens->prtc, "80");
+      }
     tokens->port = 80;
   }
   m_s = strstr(m_e, "\r\n");
+printf("2nd str\n");
   char* str_host = "\r\nHost: ";
   int need_host = 0;
   if(strstr(m_s, str_host) == NULL){
@@ -109,6 +136,7 @@ char* parse_request(char* buffer, req_info* tokens){
   else if(strstr(m_s, str_host) > strstr(m_s, "\r\n\r\n")){
   	need_host = 1;
   }
+printf("4th str\n");
   char* str_conn = "\r\nConnection: ";
   int need_conn = 0;
   if(strstr(m_s, str_conn) == NULL){
@@ -117,13 +145,23 @@ char* parse_request(char* buffer, req_info* tokens){
   else if(strstr(m_s, str_conn) > strstr(m_s, "\r\n\r\n")){
   	need_conn = 1;
   }
+printf("6th str\n");
   char* http = "HTTP/1.1";
   char* clos = "close";
+  if(strcmp(tokens->method, "CONNECT") == 0){
+    printf("Buffer size = %lu\n", strlen(buffer));
+    char* ans = malloc(strlen(buffer)+1);
+    memset(ans, '\0', strlen(buffer)+1);
+    strcpy(ans, buffer);
+    return ans;
+  }
+printf("7th str\n");
   size_t alloclen = strlen(tokens->method)+strlen(tokens->p_url)+strlen(http)+2 + need_host*(strlen(str_host)+strlen(tokens->host)) + need_conn*(strlen(str_conn)+strlen(clos)) + strlen(m_s)+1;
+  printf("allocation size = %lu\n", alloclen);
   char* ans = malloc(alloclen);
   if(ans == NULL){
-  	printf("Malloc failed\n");
-  	return NULL;
+    printf("Malloc failed\n");
+    return NULL;
   }
   memset(ans, '\0', alloclen);
   strcpy(ans, tokens->method);
@@ -132,17 +170,19 @@ char* parse_request(char* buffer, req_info* tokens){
   strcat(ans, " ");
   strcat(ans, http);
   if(need_host == 1){
-  	strcat(ans, str_host);
-  	strcat(ans, tokens->host);
+    strcat(ans, str_host);
+    strcat(ans, tokens->host);
   }
   if(need_conn == 1){
-  	strcat(ans, str_conn);
-  	strcat(ans, clos);
+    strcat(ans, str_conn);
+    strcat(ans, clos);
   }
-  m_e = strstr(m_s, "\r\nProxy-Connection: ");
-  strncat(ans, m_s, (int)(m_e - m_s));
-  m_e += 2;
-  m_s = strstr(m_e, "\r\n");
+  if((m_e = strstr(m_s, "\r\nProxy-Connection: ")) != NULL){
+    strncat(ans, m_s, (int)(m_e - m_s));
+    m_e += 2;
+    m_s = strstr(m_e, "\r\n");
+  }
+printf("8th str\n");
   strcat(ans, m_s);
   return ans;
 }
@@ -152,7 +192,7 @@ rsp_info* parse_response(char* buffer){
   rsp_info* tokens = (rsp_info*)malloc(sizeof(rsp_info));
   char* m_s = buffer;
   char* m_e = strstr(m_s, "\r\n");
-  char* c_s = m_e + 2;
+  char* c_s = m_e;
   // status
   tokens->status = malloc((int)(m_e - m_s + 1));
   memset(tokens->status, '\0', (int)(m_e - m_s + 1));

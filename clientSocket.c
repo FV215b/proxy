@@ -9,11 +9,12 @@
 #include <errno.h>
 #define BUFF_SIZE 104800
 #define MSG1 "GET http://www.cplusplus.com/reference/unordered_map/unordered_map/ HTTP/1.1\r\nHost: www.cplusplus.com\r\nProxy-Connection: Keep-Alive\r\n\r\n"
-#define MSG2 "CONNECT https://www.google.com/ HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG2 "CONNECT www.google.com:443 HTTP/1.1\r\nProxy-Connection: Keep-Alive\r\n\r\n"
 #define MSG3 "GET http://stackoverflow.com/questions/37907986/error-in-recover-free-invalid-next-size-normal HTTP/1.1\r\nHost: stackoverflow.com\r\nProxy-Connection: Keep-Alive\r\n\r\n"
 #define MSG4 "GET http://beej.us/guide/bgnet/output/html/multipage/getaddrinfoman.html HTTP/1.1\r\nHost: beej.us\r\nProxy-Connection: Keep-Alive\r\n\r\n"
 #define MSG5 "GET http://pubs.opengroup.org/onlinepubs/9699919799/functions/strncat.html HTTP/1.1\r\nHost: pubs.opengroup.org\r\nProxy-Connection: Keep-Alive\r\n\r\n"
 #define MSG6 "GET http://www.gnu.org/software/gsl HTTP/1.1\r\nHost: www.gnu.org\r\nProxy-Connection: Keep-Alive\r\n\r\n"
+#define MSG7 "GET http://man7.org/linux/man-pages/man3/pthread_create.3.html HTTP/1.1\r\nHost: man7.org\r\nProxy-Connection: Keep-Alive\r\n\r\n"
 int main(int argc, char const *argv[])
 {
     if(argc != 2){
@@ -25,7 +26,7 @@ int main(int argc, char const *argv[])
         perror("Engaging reserved port is banned\n");
         exit(EXIT_FAILURE);
     }
-    char *buff = MSG5;
+    char *buff = MSG2;
     struct sockaddr_in client;
     unsigned int socket_len = sizeof(client);
     
