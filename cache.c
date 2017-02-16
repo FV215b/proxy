@@ -1,20 +1,7 @@
 #include "cache.h"
-#define DEBUG
+#include "log.h"
 
-char* getLoctime(){
-  time_t curtime;
-  struct tm* loc_time;
-  curtime = time(NULL);
-  loc_time = localtime(&curtime);
-  char* curr = asctime(loc_time);
-#ifdef DEBUG
-  printf("getLoctime is:%s\n", curr);
-#endif
-  char* time = malloc(strlen(curr)+1);
-  memset(time, '\0', strlen(curr)+1);
-  strcpy(time, curr);
-  return time; 
-}
+#define DEBUG
 
 double expMinusDate(char* date, char* expire){
   struct tm d;
@@ -91,8 +78,8 @@ bool allocCache(char* buff, char* url, char* date, double extime){
 	2. Scan for cache, if found and return cached response
 	3. If not found, allocate a memory and store response
 */
-char* readCache(char* url){
-	if(!scanCache(url)){
+char* readCache(char* url, FILE* log, int uid){
+	if(!scanCache(url, log, uid)){
 		printf("Cached response not found\n");
 		return NULL;
 	}
@@ -105,16 +92,16 @@ char* readCache(char* url){
 	1. check if any URL matches(main)
 	2. check if any cache expires(peripheral) 
 */
-bool scanCache(char* url){
+bool scanCache(char* url, FILE* log, int uid){
 	cache* curr = head;
 	bool found = false;
-	// int status = 0;
+	int status = 0;
 	while(curr != NULL){
-		curr->ext -= 1;
-		//if(isExpired(curr->date, curr->ext) == 1){
-		if(curr->ext <= 0){
+		//curr->ext -= 1;
+		if(isExpired(curr->date, curr->ext) == 1){
+		//if(curr->ext <= 0){
 			if(strcmp(curr->url, url) == 0){
-				// status = 1;
+				status = 1;
 			}
 			cache* temp = curr;
 			curr = curr->next;
@@ -122,7 +109,7 @@ bool scanCache(char* url){
 			continue;
 		}
 		if(strcmp(curr->url, url) == 0){
-			// status = 2;
+			status = 2;
 			cache* temp = curr;
 			curr = curr->next;
 			moveCache(temp);
@@ -131,7 +118,7 @@ bool scanCache(char* url){
 		}
 		curr = curr->next;
 	}
-	// cacheStatus(status);
+	logCheckRequest(log, uid, cacheStatus(status));
 	return found;
 }
 
@@ -190,28 +177,46 @@ void printCache(){
 	}
 }
 
-/*int main(int argc, char const *argv[]){
-	allocCache("1st hello", "www.bing.com/musics", EXPIRE_TIME);
-	printCache();
-	readCache("www.bing.com/musics");
-	printCache();
-	readCache("www.bing.com/musics");
-	allocCache("1st hello", "www.bing.com/musics", EXPIRE_TIME);
-	allocCache("2nd hello", "www.google.com/maps", EXPIRE_TIME);
-	allocCache("3rd hello", "www.baidu.com/news", EXPIRE_TIME);
-	allocCache("4th hello", "www.yahoo.com/musics", EXPIRE_TIME);
-	printCache();
-	readCache("www.baidu.com/news");
-	printCache();
-	allocCache("5th hello", "www.yahoo.com/images", EXPIRE_TIME);
-	printCache();
-	allocCache("6th hello", "www.zhihu.com/questions", EXPIRE_TIME);
-	printCache();
-	readCache("www.zhihu.com/questions");
-	printCache();
-	allocCache("longer hello", "www.zhihu.com/questions", EXPIRE_TIME);
-	printCache();
-	readCache("www.zhihu.com/questions");
-	printCache();
-	return EXIT_SUCCESS;
-}*/
+#include "parser.h"
+#include "cache_policy.h"
+
+int isExpired(char* date, double count){
+  if(date == NULL){
+    printf("Failed to get the date of response in cache\n");
+    return 0;
+  }
+  int exp = -1;
+  double diff = curMinusDate(date) - count;
+  
+#ifdef DEBUG
+    printf("new - cur in seconds is: %f\n", diff);
+#endif
+    if(diff >= 0){
+#ifdef DEBUG
+      printf("DEBUG:  expired\n");
+#endif
+      exp = 1;
+    }else{
+#ifdef DEBUG
+      exp = 0;
+#endif
+    }
+  return exp;
+}
+
+/*use weak(Last-Modified time value) and strong validators(entity tag) to check for conditions*/
+/*need to compare these validatory with the latest one, is there any way to get the head of the cache?*/
+/*need to check whether the head is avaliable, if null, response is the first one, must valid??*/
+
+/*see if expired, in cache, valid, need validation*/
+int cacheStatus(int status){
+  switch(status){
+  case 0:
+    return 0; //not in cache
+  case 1:
+    return 1; //in cache but expired
+  case 2:
+    return 2;
+  }
+  return -1;
+}

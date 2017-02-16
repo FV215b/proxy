@@ -11,13 +11,24 @@
 #include "parser.h"
 #include "cache.h"
 #include "socket.h"
+#include "log.h"
 
 pthread_mutex_t lock;
+int uid = 100;
+struct _threadPara {
+    int fd;
+    FILE* f;
+    struct sockaddr_in server;
+};
+typedef struct _threadPara threadPara;
 
-void* multiThreadHandle(void* ptr){
+void* multiThreadHandle(void* para){
     printf("Build connection\n");
 
-    int conn_fd = *((int *)ptr);
+    threadPara* pa = (threadPara *)para;
+    int conn_fd = pa->fd;
+    FILE* log = pa->f;
+    struct sockaddr_in server = pa->server;
     char buff[BUFF_SIZE];
     memset(buff, '\0', BUFF_SIZE);
     int receive_len = recv(conn_fd, buff, BUFF_SIZE, 0);
@@ -42,39 +53,74 @@ void* multiThreadHandle(void* ptr){
     printf("Length = %lu\nParsing result:\n%s", strlen(sendbuff), sendbuff);
     printf("Method: %s\nService: %s\nHost: %s\nPort: %d\nCompURL: %s\nPartURL: %s\n", reqinfo->method, reqinfo->prtc, reqinfo->host, reqinfo->port, reqinfo->c_url, reqinfo->p_url);
     pthread_mutex_lock(&lock);
+    logRequest(log, reqinfo->header, uid, inet_ntoa(server.sin_addr));
+    uid++;
     char* cache_read = NULL;
     if(strcmp(reqinfo->method, "GET") == 0){
-        cache_read = readCache(reqinfo->c_url);
+        cache_read = readCache(reqinfo->c_url, log, uid);
+        uid++;
     }
     int send_status;
+    rsp_info* rspinfo;
     if(cache_read == NULL){
+        logServer(log, reqinfo->header, NULL, reqinfo->host, uid);
+        uid++;
         char* newbuff = clientSock(reqinfo->host, reqinfo->prtc, sendbuff);
         if(newbuff == NULL || strlen(newbuff) == 0){
-          close(conn_fd);
-          free(reqinfo->host);
-          free(reqinfo->c_url);
-          free(reqinfo->p_url);
-          free(reqinfo->header);
-          free(reqinfo);
-          printf("Connection closed\n");
-          pthread_exit(NULL);    
-	  //return NULL;
+            close(conn_fd);
+            free(reqinfo->host);
+            free(reqinfo->c_url);
+            free(reqinfo->p_url);
+            free(reqinfo->header);
+            free(reqinfo);
+            printf("Connection closed\n");
+            pthread_exit(NULL);    
+            //return NULL;
         }
-        rsp_info* rspinfo = parse_response(newbuff);
-	printf("Code: %d\nStatus: %s\nDate: %s\n", rspinfo->code, rspinfo->status, rspinfo->date);
+        rspinfo = parse_response(newbuff);
+        printf("Code: %d\nStatus: %s\nDate: %s\n", rspinfo->code, rspinfo->status, rspinfo->date);
+        logServer(log, NULL, rspinfo->status, reqinfo->host, uid);
+        uid++;
+        if(rspinfo->code == 200){
+            if(rspinfo->cache != NULL && strcmp(rspinfo->cache, "no-cache") == 0){
+                logOkCheck(log, 4, NULL, uid);
+            }
+            else if(rspinfo->expire != NULL){
+                logOkCheck(log, 1, rspinfo->expire, uid);
+            }
+            else{
+                logOkCheck(log, 5, NULL, uid);
+            }
+            uid++;
+        }
         double exptime = EXPIRE_TIME;
         if(rspinfo->expire != NULL){
-            // exptime = diffTime();
+            exptime = expMinusDate(rspinfo->date, rspinfo->expire);
         }
         if(strcmp(reqinfo->method, "GET") == 0 && rspinfo->code == 200){
             if(rspinfo->cache == NULL){
                 allocCache(newbuff, reqinfo->c_url, rspinfo->date, exptime);
             }
-            else if(strcmp(rspinfo->cache, "no-cache") != 0){
-                allocCache(newbuff, reqinfo->c_url, rspinfo->date, exptime);
+            else{
+                logC_control(log, rspinfo->cache, uid);
+                uid++;
+                if(strcmp(rspinfo->cache, "no-cache") != 0){
+                    allocCache(newbuff, reqinfo->c_url, rspinfo->date, exptime);
+                }
             }
         }
+        if(rspinfo->etag != NULL){
+            logEtag(log, rspinfo->etag, uid);
+            uid++;
+        }
         send_status = send(conn_fd, newbuff, strlen(newbuff)+1, 0);
+        if(rspinfo->code != 200){
+            logRespClient(log, rspinfo->status, 1, uid);
+        }
+        else{
+            logRespClient(log, rspinfo->status, 0, uid);
+        }
+        uid++;
         if(rspinfo->etag != NULL){
             free(rspinfo->etag);
         }
@@ -102,6 +148,7 @@ void* multiThreadHandle(void* ptr){
     }
     printf("Response is successfully sent\n");
     close(conn_fd);
+
     free(reqinfo->host);
     free(reqinfo->c_url);
     free(reqinfo->p_url);
@@ -126,7 +173,13 @@ int main(int argc, char const *argv[])
     }
     struct sockaddr_in server;
     unsigned int socket_len = sizeof(server);
-
+    FILE* fp;
+    char* name = "/var/log/erss-proxy.log";
+    fp = fopen(name, "w+");
+    if(fp == NULL){
+        printf("fail to open the log file, error = %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
     /* Create socket */
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -148,11 +201,11 @@ int main(int argc, char const *argv[])
         perror("Listen error\n");
         exit(EXIT_FAILURE);
     }
-    /*int daemon_status = daemon(0, 1);
+    int daemon_status = daemon(0, 1);
     if(daemon_status != 0){
         perror("Daemon create failed\n");
         exit(EXIT_FAILURE);
-    }*/
+    }
     /* Accept */
     
     while(1){
@@ -161,9 +214,14 @@ int main(int argc, char const *argv[])
             perror("Connection error\n");
             exit(EXIT_FAILURE);
         }
-        //multiThreadHandle(&conn_fd);
+        
+        threadPara para;
+        para.fd = conn_fd;
+        para.f = fp;
+        para.server = server;
+        //multiThreadHandle(&para);
         pthread_t thread;
-        if(pthread_create(&thread, NULL, multiThreadHandle, &conn_fd) != 0) {
+        if(pthread_create(&thread, NULL, multiThreadHandle, &para) != 0) {
             perror("Thread create error\n");
             exit(EXIT_FAILURE);
         }
@@ -172,6 +230,6 @@ int main(int argc, char const *argv[])
             exit(EXIT_FAILURE);
         }*/
     }
-
+    fclose(fp);
     return EXIT_SUCCESS;
 }

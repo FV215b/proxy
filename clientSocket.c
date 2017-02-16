@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
         perror("Engaging reserved port is banned\n");
         exit(EXIT_FAILURE);
     }
-    char *buff = MSG2;
+    char *buff = MSG5;
     struct sockaddr_in client;
     unsigned int socket_len = sizeof(client);
     
