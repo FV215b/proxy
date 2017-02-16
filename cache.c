@@ -177,9 +177,6 @@ void printCache(){
 	}
 }
 
-#include "parser.h"
-#include "cache_policy.h"
-
 int isExpired(char* date, double count){
   if(date == NULL){
     printf("Failed to get the date of response in cache\n");
